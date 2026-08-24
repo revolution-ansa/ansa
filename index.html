@@ -53,6 +53,41 @@
   .sp-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:4px}
   .sp-help{font-size:12px; color:var(--sub); margin-top:10px; line-height:1.7}
   .sp-help b{color:var(--green)} .sp-help .e{color:var(--red)}
+
+  /* Claude監査ダッシュボード（読み取り専用） */
+  .audit-intro{margin:16px 0 4px; background:rgba(90,169,255,.10); border:1px solid rgba(90,169,255,.35); border-radius:12px; padding:12px 15px; font-size:12.5px; line-height:1.8; color:var(--txt)}
+  .audit-intro b{color:var(--blue)}
+  .audit-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:14px 0 4px}
+  .audit-updated{font-size:12px; color:var(--sub)}
+  .audit-loading,.audit-empty{color:var(--sub); font-size:13.5px; padding:22px 6px}
+  .audit-banner{display:flex; align-items:center; gap:14px; border:1px solid var(--line); border-radius:16px; padding:18px 18px; margin:12px 0}
+  .audit-banner .ab-icon{width:44px; height:44px; flex:none; border-radius:12px; display:grid; place-items:center; font-size:22px; font-weight:800}
+  .audit-banner .ab-label{font-size:18px; font-weight:800}
+  .audit-banner .ab-sub{font-size:12px; color:var(--sub); margin-top:3px}
+  .a-ok{background:rgba(62,207,142,.10); border-color:rgba(62,207,142,.45)} .a-ok .ab-icon{background:rgba(62,207,142,.18); color:var(--green)} .a-ok .ab-label{color:var(--green)}
+  .a-warn{background:rgba(217,180,106,.10); border-color:rgba(217,180,106,.5)} .a-warn .ab-icon{background:rgba(217,180,106,.18); color:var(--gold2)} .a-warn .ab-label{color:var(--gold2)}
+  .a-down{background:rgba(255,118,118,.10); border-color:rgba(255,118,118,.5)} .a-down .ab-icon{background:rgba(255,118,118,.18); color:var(--red)} .a-down .ab-label{color:var(--red)}
+  .a-unknown{background:var(--panel2); border-color:var(--line)} .a-unknown .ab-icon{background:var(--panel); color:var(--sub)} .a-unknown .ab-label{color:var(--sub)}
+  .audit-sec-t{font-size:12px; color:var(--gold2); letter-spacing:1px; font-weight:700; margin:18px 0 8px}
+  .audit-counts{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+  .ac-tile{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px 8px; text-align:center}
+  .ac-tile .ac-n{font-size:22px; font-weight:800}
+  .ac-tile .ac-l{font-size:11px; color:var(--sub); margin-top:2px}
+  .ac-allow .ac-n{color:var(--green)} .ac-warn .ac-n{color:var(--gold2)} .ac-block .ac-n{color:var(--red)}
+  .audit-chans{display:flex; gap:8px; flex-wrap:wrap}
+  .chip-ch{font-size:12px; font-weight:700; padding:6px 12px; border-radius:20px; border:1px solid var(--line); background:var(--panel2); color:var(--sub)}
+  .chip-ch.ch-on{color:var(--green); border-color:rgba(62,207,142,.4); background:rgba(62,207,142,.1)}
+  .chip-ch.ch-off{color:var(--sub)}
+  .audit-find{display:flex; flex-direction:column; gap:8px}
+  .find-row{display:flex; align-items:center; gap:10px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:10px 12px; flex-wrap:wrap}
+  .find-row .lv{font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:20px; flex:none}
+  .lv-allow{background:rgba(62,207,142,.15); color:var(--green)} .lv-warn{background:rgba(217,180,106,.16); color:var(--gold2)} .lv-block{background:rgba(255,118,118,.14); color:var(--red)}
+  .find-name{flex:1; min-width:120px; font-size:13.5px}
+  .find-count{font-size:12px; color:var(--sub)} .find-when{font-size:11.5px; color:var(--sub)}
+  .audit-note{margin:16px 0 4px; font-size:12px; color:var(--sub); line-height:1.8; border-left:3px solid var(--gold); padding:8px 12px; background:var(--panel)}
+  .audit-note b{color:var(--gold2)}
+  @media (max-width:560px){ .audit-counts{grid-template-columns:repeat(2,1fr)} }
+
   :focus-visible{outline:2px solid var(--gold2); outline-offset:2px; border-radius:6px}
 
   /* header */
@@ -392,6 +427,7 @@
     <button class="tab active" id="tab-launcher" onclick="switchTab('launcher')">アンサに頼む</button>
     <button class="tab" id="tab-worklist" onclick="switchTab('worklist')">作業リスト<span class="count" id="wcount">0</span></button>
     <button class="tab" id="tab-products" onclick="switchTab('products')">作ったもの<span class="count" id="pcount">0</span></button>
+    <button class="tab" id="tab-audit" onclick="switchTab('audit')">Claude監査</button>
   </div>
 
   <!-- ============================================================ -->
@@ -667,6 +703,23 @@
     </div>
   </div>
 
+  <!-- ============================================================ -->
+  <!-- VIEW 4: Claude監査（読み取り専用・PCの監査役の状態を表示）      -->
+  <!-- ============================================================ -->
+  <div class="view" id="view-audit">
+    <div class="audit-intro">
+      PC上で動く「Claude監査役」の状態を、スマホからも確認できます。<b>これは表示専用</b>で、ここからPCへ指示や再起動はできません。数値は匿名の集計だけで、質問・回答の本文は含まれません。
+    </div>
+    <div class="audit-bar">
+      <span class="audit-updated" id="audit-updated">—</span>
+      <div class="spacer"></div>
+      <button class="tbtn" id="audit-refresh" onclick="auditLoad()">🔄 更新</button>
+    </div>
+    <div id="audit-body">
+      <div class="audit-loading">読み込み中…</div>
+    </div>
+  </div>
+
   <footer>
     このファイルは <b>60_成果物/棚卸し・管理/</b> に保存されています（同期版・iPhone対応）。作業リストは <b>クラウド同期（Supabase）</b>を設定すると全端末で共有され、未設定なら各端末のブラウザに保存されます。<br>
     「アンサに頼む」「作ったもの」の掲載は、フォルダに実在するものだけ（<b>2026-07-21 実査・成果物20件</b>）。<b>作業リスト</b>は同期オンならSupabase、オフならこの端末のブラウザに保存されます。「外した成果物」の情報は<b>常にこの端末のブラウザ</b>に保存されます（消えると困る作業は「📋 一覧をコピー」でファイル保存を）。<br>
@@ -885,10 +938,11 @@ filterFeatures();
    タブ切替
    ========================================================= */
 function switchTab(name){
-  ["launcher","worklist","products"].forEach(n=>{
+  ["launcher","worklist","products","audit"].forEach(n=>{
     document.getElementById("view-"+n).classList.toggle("show", n===name);
     document.getElementById("tab-"+n).classList.toggle("active", n===name);
   });
+  if(name==="audit") auditOnShow();
 }
 
 /* =========================================================
@@ -1670,6 +1724,116 @@ async function fpFire(){
     btn.disabled = false;
     btn.textContent = before;
   }
+}
+
+/* =========================================================
+   Claude監査ダッシュボード（読み取り専用・公開JSONを表示するだけ）
+   ========================================================= */
+const AUDIT_URL = "data/claude-auditor-status.json";
+let auditTimer = null, auditStarted = false, auditLastFetch = null;
+
+function auditOnShow(){
+  if(auditStarted) return;
+  auditStarted = true;
+  auditLoad();
+  // 60秒ごとに自動更新（監査タブ表示中のみ実行）
+  auditTimer = setInterval(()=>{
+    if(document.getElementById("view-audit").classList.contains("show")) auditLoad();
+  }, 60000);
+}
+function auditFmtJST(iso){
+  try{
+    const d = new Date(iso); if(isNaN(d)) return "—";
+    return new Intl.DateTimeFormat("ja-JP",{ timeZone:"Asia/Tokyo",
+      year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" }).format(d);
+  }catch(e){ return "—"; }
+}
+function auditAgo(iso){
+  const d = new Date(iso); if(isNaN(d)) return "";
+  const min = Math.floor((Date.now()-d.getTime())/60000);
+  if(min < 1) return "たった今";
+  if(min < 60) return min+"分前";
+  const h = Math.floor(min/60); if(h < 24) return h+"時間前";
+  return Math.floor(h/24)+"日前";
+}
+/* 稼働状態は updatedAt から導出（service.state は信用しない） */
+function auditState(iso){
+  const d = new Date(iso);
+  if(isNaN(d)) return { label:"状態不明", icon:"❓", cls:"a-unknown" };
+  const min = (Date.now()-d.getTime())/60000;
+  if(min <= 15) return { label:"正常稼働", icon:"✓", cls:"a-ok" };
+  if(min <= 60) return { label:"更新遅延", icon:"⚠", cls:"a-warn" };
+  return { label:"停止または通信切断", icon:"■", cls:"a-down" };
+}
+async function auditLoad(){
+  const rb = document.getElementById("audit-refresh");
+  if(rb) rb.disabled = true;
+  try{
+    const res = await fetch(AUDIT_URL + "?t=" + Date.now(), { cache:"no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    auditLastFetch = new Date();
+    renderAudit(data);
+  }catch(e){
+    renderAuditError(e);
+  }finally{
+    if(rb) rb.disabled = false;
+    const up = document.getElementById("audit-updated");
+    if(up) up.textContent = "自動更新：60秒ごと" + (auditLastFetch ? " ・ 取得 " + auditFmtJST(auditLastFetch.toISOString()) : "");
+  }
+}
+function renderAudit(d){
+  d = d || {};
+  const st = auditState(d.updatedAt);
+  const c = d.counts || {}, ch = d.channels || {};
+  const findings = Array.isArray(d.recentFindings) ? d.recentFindings : [];
+  const num = v => { v = Number(v); return isFinite(v) ? v : 0; };
+  const chLabel = v => v==="active" ? "接続中" : v==="not_connected" ? "未接続" : "不明";
+  const chCls   = v => v==="active" ? "ch-on"  : "ch-off";
+  const LV = { allow:{t:"ALLOW",c:"lv-allow"}, warn:{t:"WARN",c:"lv-warn"}, block:{t:"BLOCK",c:"lv-block"} };
+  const chans = [["claudeCode","Claude Code"],["chrome","Chrome"],["edge","Edge"],["desktopCowork","Desktop/Cowork"]];
+
+  let html = "";
+  html += `<div class="audit-banner ${st.cls}"><span class="ab-icon">${st.icon}</span>`
+        + `<div><div class="ab-label">${esc(st.label)}</div>`
+        + `<div class="ab-sub">最終更新：${esc(auditFmtJST(d.updatedAt))}（日本時間） ・ ${esc(auditAgo(d.updatedAt))}</div></div></div>`;
+
+  html += `<div class="audit-sec-t">直近24時間の判定</div><div class="audit-counts">`
+        + `<div class="ac-tile"><div class="ac-n">${num(c.total)}</div><div class="ac-l">合計</div></div>`
+        + `<div class="ac-tile ac-allow"><div class="ac-n">${num(c.allow)}</div><div class="ac-l">ALLOW</div></div>`
+        + `<div class="ac-tile ac-warn"><div class="ac-n">${num(c.warn)}</div><div class="ac-l">WARN</div></div>`
+        + `<div class="ac-tile ac-block"><div class="ac-n">${num(c.block)}</div><div class="ac-l">BLOCK</div></div></div>`;
+
+  html += `<div class="audit-sec-t">接続状態</div><div class="audit-chans">`;
+  chans.forEach(([k,label])=>{ html += `<span class="chip-ch ${chCls(ch[k])}">${esc(label)}：${esc(chLabel(ch[k]))}</span>`; });
+  html += `</div>`;
+
+  html += `<div class="audit-sec-t">最近の検出項目</div>`;
+  if(findings.length === 0){
+    html += `<div class="audit-empty">検出項目はありません。</div>`;
+  }else{
+    html += `<div class="audit-find">`;
+    findings.forEach(f=>{
+      const L = LV[f.level] || { t:"—", c:"lv-allow" };
+      html += `<div class="find-row"><span class="lv ${L.c}">${esc(L.t)}</span>`
+            + `<span class="find-name">${esc(f.label || "その他の監査項目")}</span>`
+            + `<span class="find-count">${num(f.count)}件</span>`
+            + `<span class="find-when">${esc(auditAgo(f.lastDetectedAt))}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="audit-note">※「ALLOW」は登録ルール上の問題を検出しなかったという意味で、`
+        + `<b>回答内容の正確性を保証するものではありません</b>。</div>`;
+
+  document.getElementById("audit-body").innerHTML = html;
+}
+function renderAuditError(e){
+  document.getElementById("audit-body").innerHTML =
+    `<div class="audit-banner a-unknown"><span class="ab-icon">❓</span>`
+    + `<div><div class="ab-label">状態を取得できません</div>`
+    + `<div class="ab-sub">データを読み込めませんでした（${esc(String(e && e.message || e))}）。`
+    + `時間をおいて「🔄 更新」を押してください。</div></div></div>`;
 }
 
 /* init */
