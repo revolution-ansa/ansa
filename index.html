@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1420">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="アンサ管理画面">
+<title>アンサ管理画面 — revolution本部AI</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1d2740; --line:#2b3652;
+    --txt:#e8ecf5; --sub:#9fb0d0; --gold:#d9b46a; --gold2:#f0d091;
+    --green:#3ecf8e; --blue:#5aa9ff; --red:#ff7676; --purple:#b98bff;
+    --shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif;
+    background:radial-gradient(1200px 600px at 70% -10%,#1a2338 0%,var(--bg) 55%);
+    color:var(--txt); min-height:100vh; -webkit-font-smoothing:antialiased;
+    -webkit-text-size-adjust:100%; text-size-adjust:100%;
+  }
+  .wrap{
+    max-width:1120px; margin:0 auto;
+    padding:calc(28px + env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
+  }
+
+  /* スマホ向け注意バナー（PC専用機能の案内） */
+  .mnote{
+    display:none; margin:16px 0 0; background:rgba(90,169,255,.10); border:1px solid rgba(90,169,255,.35);
+    border-radius:12px; padding:12px 15px; font-size:12.5px; line-height:1.7; color:var(--txt);
+  }
+  .mnote b{color:var(--blue)}
+  .mnote.show{display:block}
+
+  /* クラウド同期バー・設定パネル */
+  .syncbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:18px 0 2px}
+  .sync-status{font-size:12.5px; font-weight:700; display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:20px; border:1px solid var(--line)}
+  .sync-status.off{color:var(--sub); background:var(--panel2)}
+  .sync-status.on{color:var(--green); background:rgba(62,207,142,.12); border-color:rgba(62,207,142,.4)}
+  .sync-status.err{color:var(--red); background:rgba(255,118,118,.1); border-color:rgba(255,118,118,.4)}
+  .syncpanel{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin:10px 0 2px}
+  .sp-title{font-size:14px; font-weight:700; color:var(--gold2); margin-bottom:6px}
+  .sp-desc{font-size:12.5px; color:var(--sub); line-height:1.8; margin-bottom:12px}
+  .sp-desc b{color:var(--txt)}
+  .sp-row{display:flex; flex-direction:column; gap:5px; margin-bottom:10px}
+  .sp-row label{font-size:12px; color:var(--gold2)}
+  .sp-row input{background:#0c111c; border:1px solid var(--line); border-radius:10px; color:var(--txt); font-size:16px; padding:10px 12px; font-family:"Consolas",monospace; width:100%}
+  .sp-row input:focus{outline:0; border-color:var(--gold)}
+  .sp-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:4px}
+  .sp-help{font-size:12px; color:var(--sub); margin-top:10px; line-height:1.7}
+  .sp-help b{color:var(--green)} .sp-help .e{color:var(--red)}
+  :focus-visible{outline:2px solid var(--gold2); outline-offset:2px; border-radius:6px}
+
+  /* header */
+  header{display:flex; align-items:center; gap:18px; margin-bottom:8px}
+  .logo{
+    width:52px; height:52px; border-radius:14px; flex:none;
+    background:linear-gradient(135deg,var(--gold2),var(--gold)); color:#1a1200;
+    display:grid; place-items:center; font-weight:800; font-size:24px; box-shadow:var(--shadow);
+  }
+  h1{font-size:24px; margin:0; letter-spacing:.5px}
+  .tagline{color:var(--sub); font-size:13px; margin-top:3px}
+  .badge{margin-left:auto; font-size:12px; color:var(--sub); text-align:right; line-height:1.6}
+  .badge b{color:var(--gold2)}
+
+  /* tabs */
+  .tabs{display:flex; gap:8px; margin:22px 0 4px; border-bottom:1px solid var(--line); flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; position:sticky; top:0; z-index:20;
+    background:linear-gradient(180deg,var(--bg) 60%,transparent); padding-top:6px}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{
+    background:none; border:0; cursor:pointer; color:var(--sub); font-size:14.5px; font-weight:700;
+    padding:11px 18px; border-radius:10px 10px 0 0; position:relative; letter-spacing:.5px;
+    font-family:inherit; white-space:nowrap;
+  }
+  .tab:hover{color:var(--txt)}
+  .tab.active{color:var(--gold2)}
+  .tab.active::after{
+    content:""; position:absolute; left:12px; right:12px; bottom:-1px; height:2px;
+    background:linear-gradient(90deg,var(--gold2),var(--gold)); border-radius:2px;
+  }
+  .tab .count{
+    font-size:11px; background:var(--panel2); border:1px solid var(--line);
+    padding:1px 8px; border-radius:20px; margin-left:7px; color:var(--sub);
+  }
+
+  .view{display:none}
+  .view.show{display:block; animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* how it works (collapsible) */
+  .howto{
+    margin:22px 0 8px; background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:0; overflow:hidden;
+  }
+  .howto-head{
+    width:100%; background:none; border:0; cursor:pointer; font-family:inherit; color:var(--txt);
+    display:flex; align-items:center; gap:12px; padding:14px 20px; font-size:13.5px; font-weight:700; letter-spacing:.5px;
+  }
+  .howto-head .mark{color:var(--gold); font-size:16px}
+  .howto-head .chev{margin-left:auto; color:var(--sub); font-size:12px; transition:transform .2s}
+  .howto.collapsed .chev{transform:rotate(-90deg)}
+  .howto-head:hover{background:rgba(255,255,255,.02)}
+  .howto-body{padding:0 20px 16px 20px; display:flex; gap:14px; align-items:flex-start}
+  .howto.collapsed .howto-body{display:none}
+  .howto-body .mark{color:var(--gold); font-size:20px; line-height:1.3}
+  .howto-body p{margin:0; font-size:13.5px; color:var(--sub); line-height:1.8}
+  .howto-body b{color:var(--txt)}
+  .steps{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+  .steps span{
+    font-size:12px; background:var(--panel2); border:1px solid var(--line);
+    padding:4px 11px; border-radius:20px; color:var(--sub);
+  }
+  .steps span b{color:var(--gold2)}
+
+  /* search */
+  .searchbar{position:relative; margin:20px 0 4px}
+  .searchbar .ico{position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--sub); font-size:14px; pointer-events:none}
+  .search{
+    width:100%; background:#0c111c; border:1px solid var(--line); border-radius:12px; color:var(--txt);
+    font-size:14px; padding:11px 40px 11px 38px; font-family:inherit;
+  }
+  .search:focus{outline:0; border-color:var(--gold)}
+  .search::placeholder{color:var(--sub)}
+  .search-clear{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%); background:var(--panel2);
+    border:1px solid var(--line); color:var(--sub); cursor:pointer; border-radius:8px; width:28px; height:28px;
+    font-size:14px; display:none; align-items:center; justify-content:center; font-family:inherit;
+  }
+  .search-clear.show{display:flex}
+  .search-clear:hover{color:var(--gold2); border-color:var(--gold)}
+  .noresult{text-align:center; color:var(--sub); font-size:13.5px; padding:30px 20px; display:none}
+
+  /* category */
+  .cat{margin-top:34px}
+  .cat.hidden{display:none}
+  .cat-h{display:flex; align-items:center; gap:10px; margin-bottom:14px}
+  .cat-h .dot{width:9px; height:9px; border-radius:50%; background:var(--gold)}
+  .cat-h h2{font-size:15px; margin:0; letter-spacing:1px; color:var(--gold2)}
+  .cat-h .cnt{font-size:11px; color:var(--sub); background:var(--panel2); border:1px solid var(--line); padding:1px 9px; border-radius:20px}
+  .cat-h .rule{flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent)}
+
+  /* grid */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr)); gap:16px}
+  .card{
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line); border-radius:16px; padding:18px 18px 16px;
+    display:flex; flex-direction:column; transition:transform .12s ease,border-color .12s ease,box-shadow .12s;
+  }
+  .card:hover{transform:translateY(-3px); border-color:var(--gold); box-shadow:var(--shadow)}
+  .card .top{display:flex; align-items:center; gap:11px; margin-bottom:9px}
+  .card .icn{
+    width:38px; height:38px; border-radius:11px; flex:none; display:grid; place-items:center;
+    font-size:19px; background:var(--panel); border:1px solid var(--line);
+  }
+  .card h3{margin:0; font-size:15.5px}
+  .card .src{font-size:11px; color:var(--sub); margin-top:2px}
+  .card .desc{font-size:13px; color:var(--sub); line-height:1.75; flex:1; margin:4px 0 14px}
+  .conf{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; margin-bottom:12px}
+  .conf .pill{padding:2px 9px; border-radius:20px; font-weight:600}
+  .c-high{background:rgba(62,207,142,.15); color:var(--green)}
+  .c-mid{background:rgba(90,169,255,.15); color:var(--blue)}
+  .c-check{background:rgba(255,118,118,.13); color:var(--red)}
+
+  .btn{
+    margin-top:auto; border:0; cursor:pointer; font-size:14px; font-weight:700;
+    padding:11px 14px; border-radius:11px; color:#1a1200; letter-spacing:.5px;
+    background:linear-gradient(135deg,var(--gold2),var(--gold));
+    display:flex; align-items:center; justify-content:center; gap:8px; transition:filter .12s;
+    font-family:inherit;
+  }
+  .btn:hover{filter:brightness(1.08)}
+  .btn:active{transform:translatey(1px)}
+  /* launcher card action row */
+  .card .acts{margin-top:auto; display:flex; gap:8px; align-items:stretch}
+  .card .acts .btn{margin-top:0; flex:1}
+
+  /* ===== toolbar (shared) ===== */
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:22px 0 6px}
+  .toolbar .spacer{flex:1}
+  .tbtn{
+    border:1px solid var(--line); background:var(--panel2); color:var(--txt); cursor:pointer;
+    font-size:13px; font-weight:700; padding:9px 15px; border-radius:10px; font-family:inherit;
+    display:inline-flex; align-items:center; gap:7px; transition:.12s;
+  }
+  .tbtn:hover{border-color:var(--gold); color:var(--gold2)}
+  .tbtn.primary{background:linear-gradient(135deg,var(--gold2),var(--gold)); color:#1a1200; border:0}
+  .tbtn.primary:hover{filter:brightness(1.08); color:#1a1200}
+  .tbtn.on{border-color:var(--gold); color:var(--gold2)}
+  .sortsel{
+    border:1px solid var(--line); background:var(--panel2); color:var(--txt); cursor:pointer;
+    font-size:13px; font-weight:700; padding:9px 12px; border-radius:10px; font-family:inherit;
+  }
+  .sortsel:focus{outline:0; border-color:var(--gold)}
+
+  /* status summary + filter chips */
+  .statsum{display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 2px}
+  .dupwarn{margin:12px 0 2px; padding:11px 14px; border-radius:10px;
+    background:rgba(210,140,30,.12); border:1px solid rgba(210,140,30,.5); color:var(--gold2);
+    font-size:13px; line-height:1.6}
+  .dupwarn b{color:var(--gold2)}
+  .dupwarn ul{margin:6px 0 0; padding-left:18px}
+  .dupwarn li{margin:2px 0}
+  .dupwarn .dupclose{float:right; background:transparent; border:0; color:var(--sub); cursor:pointer; font-size:14px; font-family:inherit}
+  .chip{
+    border:1px solid var(--line); background:var(--panel2); color:var(--sub); cursor:pointer;
+    font-size:12.5px; font-weight:700; padding:6px 13px; border-radius:20px; font-family:inherit;
+    display:inline-flex; align-items:center; gap:7px; transition:.12s;
+  }
+  .chip:hover{border-color:var(--gold); color:var(--txt)}
+  .chip.active{border-color:var(--gold); color:#1a1200; background:linear-gradient(135deg,var(--gold2),var(--gold))}
+  .chip .n{
+    font-size:11px; font-weight:800; min-width:18px; text-align:center; padding:0 5px;
+    border-radius:12px; background:rgba(0,0,0,.22);
+  }
+  .chip.active .n{background:rgba(0,0,0,.18); color:#1a1200}
+  .chip .swatch{width:8px; height:8px; border-radius:50%}
+  .sw-todo{background:var(--blue)} .sw-doing{background:var(--green)} .sw-hold{background:var(--gold2)}
+  .sw-reserve{background:var(--sub)} .sw-next{background:var(--purple)} .sw-done{background:var(--sub)}
+
+  /* add / edit form */
+  .form{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0 4px; display:none;
+  }
+  .form.show{display:block; animation:fade .18s ease}
+  .form .frow{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px}
+  .form .fld{flex:1; min-width:220px; display:flex; flex-direction:column; gap:6px}
+  .form label{font-size:12px; color:var(--gold2); letter-spacing:.5px}
+  .form input,.form select,.form textarea{
+    background:#0c111c; border:1px solid var(--line); border-radius:10px; color:var(--txt);
+    font-size:13.5px; padding:10px 12px; font-family:inherit; width:100%;
+  }
+  .form textarea{min-height:70px; resize:vertical; line-height:1.7}
+  .form input:focus,.form select:focus,.form textarea:focus{outline:0; border-color:var(--gold)}
+  .form .facts{display:flex; gap:10px; margin-top:6px}
+  .form .facts button{flex:0 0 auto}
+
+  /* work / product card */
+  .wgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr)); gap:16px; margin-top:16px}
+  .wcard{
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line); border-left:3px solid var(--line); border-radius:16px; padding:16px 17px 14px;
+    display:flex; flex-direction:column; transition:transform .12s,border-color .12s,box-shadow .12s;
+  }
+  .wcard:hover{transform:translateY(-3px); border-color:var(--gold); box-shadow:var(--shadow)}
+  /* status left-stripe (work list) */
+  .wl-st-todo{border-left-color:var(--blue)}
+  .wl-st-doing{border-left-color:var(--green)}
+  .wl-st-hold{border-left-color:var(--gold2)}
+  .wl-st-reserve{border-left-color:var(--sub)}
+  .wl-st-next{border-left-color:var(--purple)}
+  .wl-st-done{border-left-color:var(--line)}
+  .wcard .wtop{display:flex; align-items:flex-start; gap:10px; margin-bottom:8px}
+  .wcard h3{margin:0; font-size:15.5px; line-height:1.4; flex:1}
+  .st{font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; white-space:nowrap; flex:none}
+  .st-todo{background:rgba(90,169,255,.15); color:var(--blue)}
+  .st-doing{background:rgba(62,207,142,.16); color:var(--green)}
+  .st-hold{background:rgba(217,180,106,.16); color:var(--gold2)}
+  .st-reserve{background:rgba(159,176,208,.14); color:var(--sub)}
+  .st-next{background:rgba(185,139,255,.16); color:var(--purple)}
+  .st-done{background:rgba(62,207,142,.10); color:var(--sub)}
+  .badge-cat{font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; white-space:nowrap; flex:none; background:var(--panel); border:1px solid var(--line); color:var(--sub)}
+  .wcard .place{font-size:11.5px; color:var(--sub); margin-bottom:9px; word-break:break-all}
+  .wcard .place b{color:var(--gold2); font-weight:600}
+  .wcard .meta2{font-size:11px; color:var(--sub); margin-bottom:9px}
+  .wcard .nextlbl{font-size:11px; color:var(--gold2); letter-spacing:.5px; margin-bottom:3px}
+  .wcard .next{font-size:13px; color:var(--sub); line-height:1.75; flex:1; margin-bottom:12px}
+  .wcard .foot{display:flex; align-items:center; gap:8px; margin-bottom:10px}
+  .wcard .upd{font-size:11px; color:var(--sub)}
+  .wcard .acts{display:flex; gap:8px}
+  .wcard .go{
+    flex:1; border:0; cursor:pointer; font-size:13.5px; font-weight:700; padding:10px; border-radius:10px;
+    color:#1a1200; background:linear-gradient(135deg,var(--gold2),var(--gold)); font-family:inherit;
+    display:flex; align-items:center; justify-content:center; gap:6px; transition:filter .12s;
+  }
+  .wcard .go:hover{filter:brightness(1.08)}
+  .wcard .go.launch{background:linear-gradient(135deg,#4be3a0,var(--green)); color:#062012}
+  .icobtn{
+    border:1px solid var(--line); background:var(--panel); color:var(--sub); cursor:pointer;
+    width:40px; border-radius:10px; font-size:15px; font-family:inherit; transition:.12s;
+  }
+  .icobtn:hover{border-color:var(--gold); color:var(--gold2)}
+  .icobtn.del:hover{border-color:var(--red); color:var(--red)}
+  .icobtn.restore{width:auto; padding:0 12px; font-size:12.5px; font-weight:700}
+  /* inline delete confirm */
+  .confirm{
+    display:none; margin-top:10px; background:rgba(255,118,118,.08); border:1px solid rgba(255,118,118,.4);
+    border-radius:10px; padding:10px 12px; font-size:12.5px; color:var(--txt);
+  }
+  .confirm.show{display:block}
+  .confirm .cbtns{display:flex; gap:8px; margin-top:9px}
+  .confirm button{border:0; cursor:pointer; font-size:12.5px; font-weight:700; padding:7px 12px; border-radius:8px; font-family:inherit}
+  .confirm .yes{background:var(--red); color:#2a0808}
+  .confirm .no{background:var(--panel2); color:var(--sub); border:1px solid var(--line)!important}
+
+  .empty{
+    text-align:center; color:var(--sub); font-size:13.5px; line-height:1.9;
+    border:1px dashed var(--line); border-radius:14px; padding:40px 20px; margin-top:16px;
+  }
+
+  /* modal */
+  .overlay{
+    position:fixed; inset:0; background:rgba(6,9,16,.72); backdrop-filter:blur(3px);
+    display:none; place-items:center; padding:24px; z-index:50;
+  }
+  .overlay.show{display:grid}
+  .modal{
+    width:min(620px,100%); background:var(--panel); border:1px solid var(--line);
+    border-radius:18px; box-shadow:var(--shadow); overflow:hidden; animation:pop .16s ease;
+  }
+  @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal .m-h{padding:18px 22px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px}
+  .modal .m-h .icn{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;background:var(--panel2);border:1px solid var(--line)}
+  .modal .m-h h3{margin:0;font-size:16px}
+  .modal .m-h small{color:var(--sub);font-size:12px}
+  .m-body{padding:20px 22px}
+  .m-body .lbl{font-size:12px;color:var(--gold2);letter-spacing:1px;margin-bottom:8px}
+  .prompt{
+    background:#0c111c; border:1px solid var(--line); border-radius:12px; padding:14px 15px;
+    font-size:13.5px; line-height:1.85; color:var(--txt); white-space:pre-wrap; max-height:260px; overflow:auto;
+    font-family:"Consolas","Yu Gothic UI",monospace;
+  }
+  .m-actions{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap}
+  .m-actions button{flex:1; min-width:120px; border:0; cursor:pointer; font-weight:700; font-size:14px; padding:12px; border-radius:11px; font-family:inherit}
+  .copy{background:linear-gradient(135deg,var(--gold2),var(--gold)); color:#1a1200}
+  .launch{background:linear-gradient(135deg,#4be3a0,var(--green)); color:#062012}
+  .close{background:var(--panel2); color:var(--sub); border:1px solid var(--line)!important}
+  .hint{font-size:12px; color:var(--sub); margin-top:14px; line-height:1.7}
+  .hint b{color:var(--gold2)}
+
+  /* toast */
+  .toast{
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--green); color:#062012; font-weight:700; font-size:14px;
+    padding:12px 22px; border-radius:30px; box-shadow:var(--shadow); opacity:0;
+    transition:.25s; pointer-events:none; z-index:60;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+  footer{margin-top:48px; text-align:center; color:var(--sub); font-size:12px; line-height:1.9}
+  footer b{color:var(--gold2)}
+
+  @media (max-width:560px){
+    .wrap{padding:calc(18px + env(safe-area-inset-top)) max(15px,env(safe-area-inset-right)) calc(70px + env(safe-area-inset-bottom)) max(15px,env(safe-area-inset-left))}
+    header{gap:12px}
+    .logo{width:44px;height:44px;font-size:20px}
+    h1{font-size:20px}
+    .badge{font-size:11px}
+    .grid,.wgrid{grid-template-columns:1fr; gap:13px}
+    .toolbar{gap:8px}
+    .tbtn,.sortsel{font-size:12.5px}
+    .m-actions button{flex:1 1 100%}
+    .overlay{padding:12px}
+    /* タッチしやすい最小サイズ（iOS HIG 44px目安） */
+    .btn,.wcard .go,.tbtn{min-height:44px}
+    .icobtn{min-height:44px}
+    .chip{min-height:38px}
+    .search{font-size:16px} /* iOSで入力時に自動ズームしない */
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms!important; transition-duration:.001ms!important}
+    .card:hover,.wcard:hover{transform:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">安</div>
+    <div>
+      <h1>アンサ管理画面</h1>
+      <div class="tagline">株式会社revolution ／ ANSA hair GROUP ― AI経営本部</div>
+    </div>
+    <div class="badge">
+      <div><b>同期版 v1.4</b></div>
+      <div>2026-08-02</div>
+    </div>
+  </header>
+
+  <div class="mnote" id="mnote">
+    📱 <b>スマホ表示</b>：各機能カードの <b>「⚡ アンサを自動起動」（ansa://）はPC専用</b>です。スマホでは <b>「📋 コピー」</b>で指示文をコピーし、アンサ（AIチャット）に貼り付けてください。<br>
+    ★いちばん上の <b>「⚡ アンサを起動する」パネルは、スマホでも使えます</b>（v1.4〜）。
+  </div>
+
+  <!-- tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tab-launcher" onclick="switchTab('launcher')">アンサに頼む</button>
+    <button class="tab" id="tab-worklist" onclick="switchTab('worklist')">作業リスト<span class="count" id="wcount">0</span></button>
+    <button class="tab" id="tab-products" onclick="switchTab('products')">作ったもの<span class="count" id="pcount">0</span></button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 1: 機能ランチャー                                         -->
+  <!-- ============================================================ -->
+  <div class="view show" id="view-launcher">
+
+    <!-- ========== ⚡ アンサを起動（v1.4〜／APIトリガー経由） ========== -->
+    <style>
+      .firepanel{border:1px solid #d8cfc0;border-radius:12px;padding:14px 16px;margin:0 0 16px;background:#fdfbf7}
+      .firepanel .fp-title{font-weight:700;font-size:15px;margin-bottom:4px}
+      .firepanel .fp-desc{font-size:12.5px;color:#6b6357;line-height:1.7;margin-bottom:10px}
+      .firepanel .fp-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+      .firepanel .fp-row label{font-size:12.5px;min-width:6.5em;color:#5a5348}
+      .firepanel input[type=text],.firepanel input[type=email],.firepanel input[type=password],.firepanel textarea{
+        flex:1;min-width:180px;font:inherit;font-size:15px;padding:8px 10px;border:1px solid #cfc6b6;border-radius:8px;background:#fff}
+      .firepanel textarea{min-height:64px;resize:vertical;line-height:1.6}
+      .firepanel .fp-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+      .firepanel .fp-quota{font-size:12.5px;color:#6b6357}
+      .firepanel .fp-msg{font-size:13px;line-height:1.7;margin-top:10px;padding:9px 11px;border-radius:8px;display:none}
+      .firepanel .fp-msg.show{display:block}
+      .firepanel .fp-msg.ok{background:#eef6ec;border:1px solid #bcd9b6;color:#2f5a2a}
+      .firepanel .fp-msg.ng{background:#fbeeee;border:1px solid #e0bcbc;color:#7a2f2f}
+      .firepanel .fp-msg a{color:inherit;font-weight:700}
+      .firepanel .fp-who{font-size:12px;color:#6b6357}
+    </style>
+
+    <div class="firepanel" id="firePanel">
+      <div class="fp-title">⚡ アンサを起動する</div>
+      <div class="fp-desc">
+        指示を書いて起動すると、<b>アンサがクラウドで動き</b>、結果を GitHub の <code>ansa-routine/out/</code> にファイルとして残します。
+        スマホからでも使えます。<br>
+        <b>1日5回まで／前回から60秒あける</b>という制限をかけてあります（課金が伸びないようにするためです）。
+      </div>
+
+      <!-- 未設定のとき -->
+      <div id="fp-noconf" style="display:none">
+        <div class="fp-msg ng show">
+          先に「作業リスト」タブの <b>⚙️ 同期設定</b> で Supabase の URL と anonキー を登録してください。
+        </div>
+      </div>
+
+      <!-- 未ログインのとき -->
+      <div id="fp-login" style="display:none">
+        <div class="fp-row"><label>メール</label><input id="fp-email" type="email" autocapitalize="none" spellcheck="false" autocomplete="username"></div>
+        <div class="fp-row"><label>パスワード</label><input id="fp-pass" type="password" autocomplete="current-password"></div>
+        <div class="fp-actions">
+          <button class="tbtn primary" onclick="fpLogin()">ログイン</button>
+          <span class="fp-quota">起動は本人だけができます。他の人は起動できません。</span>
+        </div>
+      </div>
+
+      <!-- ログイン後 -->
+      <div id="fp-fire" style="display:none">
+        <div class="fp-row">
+          <textarea id="fp-text" placeholder="例：各店舗の生産性を高い順に並べて、下位3店の共通点を出してください&#10;（空のままでも起動できます。その場合は起動テストになります）"></textarea>
+        </div>
+        <div class="fp-actions">
+          <button class="tbtn primary" id="fp-btn" onclick="fpFire()">⚡ 起動する</button>
+          <span class="fp-who" id="fp-who"></span>
+          <div class="spacer" style="flex:1"></div>
+          <button class="tbtn" onclick="fpLogout()">ログアウト</button>
+        </div>
+      </div>
+
+      <div class="fp-msg" id="fp-msg"></div>
+    </div>
+
+    <div class="howto" id="howto-launcher">
+      <button class="howto-head" onclick="toggleHowto()">
+        <span class="mark">▶</span><span>使い方</span><span class="chev">▼</span>
+      </button>
+      <div class="howto-body">
+        <div class="mark">▶</div>
+        <div>
+          <p>やりたい機能の「▶ 起動」を押すと指示文が開きます。<b>⚡ アンサを自動起動</b>を押せば、新しい画面でアンサが指示文つきで立ち上がります（貼り付け不要／要ansa://設定）。設定前・うまくいかない時は<b>📋 コピー</b>→アンサに貼って送信でも動きます。<br>使わない機能は各カードの「🗑」で<b>一覧から外せます</b>（元に戻せます。「🗑 外した機能を表示」→「↩ 一覧に戻す」）。</p>
+          <div class="steps">
+            <span><b>①</b> ▶ 起動</span>
+            <span><b>②</b> ⚡ 自動起動（または📋コピー）</span>
+            <span><b>③</b> アンサが指示文つきで立ち上がる</span>
+            <span><b>整理</b> 🗑 で一覧から外す</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="searchbar">
+      <span class="ico">🔍</span>
+      <input class="search" id="q-feat" type="text" placeholder="機能を検索（名前・説明・出典で絞り込み）" oninput="filterFeatures()" aria-label="機能を検索">
+      <button class="search-clear" id="q-feat-clear" onclick="clearFeatSearch()" aria-label="検索をクリア">✕</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="tbtn" id="f-hidebtn" onclick="toggleHiddenFeat()">🗑 外した機能を表示<span class="count" id="fhidecount">0</span></button>
+      <div class="spacer"></div>
+    </div>
+
+    <section class="cat" id="cat-keiei">
+      <div class="cat-h"><span class="dot"></span><h2>経営のモノサシ ― 数字・分析・判断材料</h2><span class="rule"></span></div>
+      <div class="grid" id="grid-keiei"></div>
+    </section>
+
+    <section class="cat" id="cat-hito">
+      <div class="cat-h"><span class="dot"></span><h2>人のモノサシ ― 挑戦・育成・事業づくり</h2><span class="rule"></span></div>
+      <div class="grid" id="grid-hito"></div>
+    </section>
+
+    <section class="cat" id="cat-seisaku">
+      <div class="cat-h"><span class="dot"></span><h2>制作 ― 見せる・伝える成果物</h2><span class="rule"></span></div>
+      <div class="grid" id="grid-seisaku"></div>
+    </section>
+
+    <div class="noresult" id="feat-noresult">「<span id="feat-q"></span>」に一致する機能はありませんでした。</div>
+    <div class="empty" id="feat-empty" style="display:none">
+      表示できる機能がありません。<br>「🗑 外した機能を表示」から、外した機能を戻せます。
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 2: 作業内容一覧                                           -->
+  <!-- ============================================================ -->
+  <div class="view" id="view-worklist">
+
+    <div class="howto" id="howto-worklist">
+      <button class="howto-head" onclick="toggleHowto()">
+        <span class="mark">▶</span><span>使い方</span><span class="chev">▼</span>
+      </button>
+      <div class="howto-body">
+        <div class="mark">▶</div>
+        <div>
+          <p>続けたい作業の「▶ 続きをする」を押すと、その作業を再開する指示文が開きます。<b>⚡ アンサを自動起動</b>で続きから立ち上がります（または📋コピー→貼り付け）。上の<b>状態チップ</b>で絞り込み、<b>並び替え</b>で順番を変えられます。新しい作業は「＋ 作業を追加」で足せ、要らない作業は「🗑」で消せます。<br><b>★アンサが新しい作業をすると、この一覧に自動で追記されます</b>（画面を開き直すと反映）。手で追加・編集・削除したものはそのまま残ります。</p>
+          <div class="steps">
+            <span><b>絞る</b> 状態チップをクリック</span>
+            <span><b>追加</b> ＋ 作業を追加</span>
+            <span><b>再開</b> ▶ 続きをする → ⚡自動起動</span>
+            <span><b>削除</b> 🗑 で消す</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="syncbar">
+      <span class="sync-status off" id="syncStatus">☁️ 同期：オフ（この端末だけに保存）</span>
+      <div class="spacer"></div>
+      <button class="tbtn" id="syncReload" onclick="reloadWorks()" style="display:none">🔄 更新</button>
+      <button class="tbtn" onclick="toggleSyncPanel()">⚙️ 同期設定</button>
+    </div>
+    <div class="syncpanel" id="syncPanel" style="display:none">
+      <div class="sp-title">☁️ クラウド同期（無料・Supabase）</div>
+      <div class="sp-desc">Supabase の「Settings → API」から下の2つをコピーして貼り付け、「接続してテスト」を押すと、<b>PC・スマホ・全端末で作業リストが同期</b>されます。設定手順は同梱の「同期のはじめ方」を参照してください。</div>
+      <div class="sp-row"><label>Project URL</label><input id="sb-url" type="text" autocapitalize="none" spellcheck="false" placeholder="https://xxxxx.supabase.co"></div>
+      <div class="sp-row"><label>anon public key</label><input id="sb-key" type="text" autocapitalize="none" spellcheck="false" placeholder="eyJhbGciOi..."></div>
+      <div class="sp-actions">
+        <button class="tbtn primary" onclick="saveSyncConfig()">接続してテスト</button>
+        <button class="tbtn" onclick="pushLocalToCloud()">この端末の作業をクラウドへ送る</button>
+        <button class="tbtn" onclick="disableSync()">同期を解除</button>
+      </div>
+      <div class="sp-help" id="sp-help"></div>
+    </div>
+
+    <!-- status summary + filter -->
+    <div class="statsum" id="statsum"></div>
+
+    <!-- 重複の疑い（起動時・更新時に自動チェック。黙って統合はしない＝見える化のみ） -->
+    <div class="dupwarn" id="dupwarn" style="display:none"></div>
+
+    <div class="searchbar">
+      <span class="ico">🔍</span>
+      <input class="search" id="q-work" type="text" placeholder="作業を検索（作業名・場所・次にやること）" oninput="renderWorks()" aria-label="作業を検索">
+      <button class="search-clear" id="q-work-clear" onclick="clearWorkSearch()" aria-label="検索をクリア">✕</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="tbtn primary" onclick="openForm()">＋ 作業を追加</button>
+      <label class="sortsel" style="display:inline-flex;align-items:center;gap:8px;padding-right:6px">
+        並び替え：
+        <select id="sortsel" onchange="renderWorks()" style="background:transparent;border:0;color:var(--gold2);font-family:inherit;font-weight:700;font-size:13px;cursor:pointer">
+          <option value="updated">日時が新しい順</option>
+          <option value="status">状態順（進行中を上に）</option>
+          <option value="added">追加順</option>
+        </select>
+      </label>
+      <div class="spacer"></div>
+      <button class="tbtn" onclick="copyAll()">📋 一覧をコピー</button>
+    </div>
+
+    <!-- add / edit form -->
+    <div class="form" id="form">
+      <div class="frow">
+        <div class="fld" style="flex:2">
+          <label>作業名</label>
+          <input id="f-title" type="text" placeholder="例：対象店舗の集客チラシを作る">
+        </div>
+        <div class="fld" style="flex:0 0 160px">
+          <label>状態</label>
+          <select id="f-status">
+            <option value="未着手">未着手</option>
+            <option value="進行中">進行中</option>
+            <option value="保留">保留</option>
+            <option value="留保">留保（急ぎでない）</option>
+            <option value="次回">次回</option>
+            <option value="完了">完了</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fld">
+          <label>関連場所・出典（ファイルやフォルダ）</label>
+          <input id="f-place" type="text" placeholder="例：60_成果物 / ANESTA">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fld">
+          <label>次にやること（続きを再開するときアンサに渡す内容）</label>
+          <textarea id="f-next" placeholder="どこまで終わっていて、次に何をするかを書く。&#10;例：現状把握メモまで完成。次はチラシの構成案を3案出す。"></textarea>
+        </div>
+      </div>
+      <div class="facts">
+        <button class="tbtn primary" onclick="saveWork()" id="f-save">追加する</button>
+        <button class="tbtn" onclick="closeForm()">キャンセル</button>
+      </div>
+    </div>
+
+    <div class="wgrid" id="wgrid"></div>
+    <div class="empty" id="empty" style="display:none">
+      まだ作業が登録されていません。<br>「＋ 作業を追加」から、続けたい作業を登録してください。
+    </div>
+    <div class="empty" id="wfiltered" style="display:none">
+      条件に一致する作業がありません。<br>状態チップの「すべて」を押すか、検索語を変えてください。
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 3: 成果物一覧                                             -->
+  <!-- ============================================================ -->
+  <div class="view" id="view-products">
+
+    <div class="howto" id="howto-products">
+      <button class="howto-head" onclick="toggleHowto()">
+        <span class="mark">▶</span><span>使い方</span><span class="chev">▼</span>
+      </button>
+      <div class="howto-body">
+        <div class="mark">▶</div>
+        <div>
+          <p>これまで作った成果物を、カテゴリー別に並べています。<b>⚡ この成果物で作業</b>を押すと、アンサがそのファイルを読んで「現状の要約→次に何をするか」を確認する状態で自動起動します（貼り付け不要）。開くだけなら <b>📁</b>（パスをコピー→エクスプローラーに貼る）。要らない成果物は「🗑」で<b>この一覧から外せます</b>（<b>実ファイルは消えません</b>。「外したものを表示」から戻せます）。</p>
+          <div class="steps">
+            <span><b>作業</b> ⚡ この成果物で作業 → アンサ起動</span>
+            <span><b>開く</b> 📁 パスをコピー → エクスプローラーに貼る</span>
+            <span><b>外す</b> 🗑（実ファイルは残る）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="searchbar">
+      <span class="ico">🔍</span>
+      <input class="search" id="q-prod" type="text" placeholder="成果物を検索（名前・説明・ファイルパス）" oninput="renderProducts()" aria-label="成果物を検索">
+      <button class="search-clear" id="q-prod-clear" onclick="clearProdSearch()" aria-label="検索をクリア">✕</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="tbtn" id="p-hidebtn" onclick="toggleHidden()">🗑 外した成果物を表示<span class="count" id="phidecount">0</span></button>
+      <div class="spacer"></div>
+      <button class="tbtn" onclick="copyAllProducts()">📋 成果物リストをコピー</button>
+    </div>
+
+    <div id="pcats"></div>
+    <div class="empty" id="pempty" style="display:none">
+      表示できる成果物がありません。<br>「🗑 外した成果物を表示」から、外したものを戻せます。
+    </div>
+    <div class="empty" id="pfiltered" style="display:none">
+      検索条件に一致する成果物がありません。<br>検索語を変えてください。
+    </div>
+  </div>
+
+  <footer>
+    このファイルは <b>60_成果物/棚卸し・管理/</b> に保存されています（同期版・iPhone対応）。作業リストは <b>クラウド同期（Supabase）</b>を設定すると全端末で共有され、未設定なら各端末のブラウザに保存されます。<br>
+    「アンサに頼む」「作ったもの」の掲載は、フォルダに実在するものだけ（<b>2026-07-21 実査・成果物20件</b>）。<b>作業リスト</b>は同期オンならSupabase、オフならこの端末のブラウザに保存されます。「外した成果物」の情報は<b>常にこの端末のブラウザ</b>に保存されます（消えると困る作業は「📋 一覧をコピー」でファイル保存を）。<br>
+    ★ 成果物の「🗑」は一覧から外すだけで、元ファイルは削除しません（CLAUDE.md 最重要ルール#1）。<br>
+    ― アンサ（AI経営本部）
+  </footer>
+</div>
+
+<!-- modal -->
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="m-h">
+      <div class="icn" id="m-icn">▶</div>
+      <div><h3 id="m-title">機能名</h3><small id="m-src">出典</small></div>
+    </div>
+    <div class="m-body">
+      <div class="lbl" id="m-lbl">アンサへの指示文</div>
+      <div class="prompt" id="m-prompt"></div>
+      <div class="m-actions">
+        <button class="launch" id="m-launch" onclick="launchAnsa()">⚡ アンサを自動起動</button>
+        <button class="copy" id="m-copy" onclick="copyPrompt()">📋 コピー</button>
+        <button class="close" onclick="closeModal()">閉じる</button>
+      </div>
+      <div class="hint" id="m-hint"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ コピーしました</div>
+
+
+<script>
+/* =========================================================
+   機能ランチャー（フォルダ実在分のみ・推測なし）
+   ========================================================= */
+const FEATURES = {
+  keiei: [
+    {
+      icon:"🩺", title:"店舗月次診断", src:"90_スキル / 店舗月次診断",
+      conf:"high", confTxt:"確信度：高（スキル確立済）",
+      desc:"各店舗の月次データを、同じ切り口で診断。生産性・客単価・帰客・HP依存率で比較し、目を向けるべき3店を抽出します。",
+      prompt:"店舗月次診断を実行します。以下の月次データで各店舗を診断してください。\n（ansa-system.jp からコピペした行をこの下に貼り付けます）\n\n店舗\t技術売上\t店販売上\t総売上\t総客\t新規\tホットP\t帰客\tスタッフ数\n［ここにデータを貼る］",
+      hint:"※ ansa-system.jp からタブ区切りでコピペしたデータを貼ってから送信してください。総時間・稼働率・一分の列は貼っても無視されます。"
+    },
+    {
+      icon:"📊", title:"月報・財務分析", src:"40_財務",
+      conf:"mid", confTxt:"確信度：中（データ範囲に依存）",
+      desc:"本部の月報から利益・利益率・収益3層への寄与を読み解きます。都合の悪い数字も隠さず出します。",
+      prompt:"最新の月報（40_財務）を分析してください。\n・本部利益と利益率\n・収益3層それぞれへの寄与\n・前月比で大きく動いた項目\n事実主張には必ず出典を付け、推測は「推測です」と明示してください。",
+      hint:"※ 対象月を指定するとより正確です（例：2026年6月分）。"
+    },
+    {
+      icon:"🔍", title:"競合調査", src:"60_成果物 / 調査・分析",
+      conf:"mid", confTxt:"確信度：中（外部情報を含む）",
+      desc:"指定エリア・業種の競合を調査。既存の競合調査と同じ型で、料金・立地・強み弱みを整理します。",
+      prompt:"競合調査をしてください。\n・エリア：［　　　　　］\n・業種／対象：［　　　　　］\n料金・立地・強み・弱み・当社との差別化ポイントを表で整理してください。\n外部情報を使う場合は出典を明示し、不確かなものは「未確認」と書いてください。",
+      hint:"※ エリアと対象業種を［　］に入れてから送信してください。"
+    }
+  ],
+  hito: [
+    {
+      icon:"💺", title:"ANESTA 利用者増加戦略", src:"60_成果物 / ANESTA",
+      conf:"mid", confTxt:"確信度：中（現状把握が前提）",
+      desc:"ANESTA share salon の現状を整理し、利用者を増やす打ち手を複数案で提示。個人ノルマ化はしない前提で設計します。",
+      prompt:"ANESTA share salon の利用者を増やす戦略を検討したいです。\n現状（既存の現状把握メモ）を踏まえ、打ち手を3案、それぞれ狙い・想定コスト・リスクつきで出してください。\n『始める人が増えるか／折れないか』の人のモノサシで評価し、判断は私に返してください。",
+      hint:"※ 特定店舗に絞る場合は店名を添えてください。"
+    },
+    {
+      icon:"📈", title:"投資デイリーブリーフィング", src:"60_成果物 / 投資",
+      conf:"mid", confTxt:"確信度：中（当日情報に依存）",
+      desc:"汎用デイリー投資ブリーフィング指示書に沿って、その日の投資ブリーフィングを作成します。",
+      prompt:"本日の投資デイリーブリーフィングを、既存の『汎用デイリー投資ブリーフィング指示書』の型に沿って作成してください。\n事実と見解を分け、数値・固有名詞は原文のまま保ってください。",
+      hint:"※ 最新の相場データが必要な場合は、根拠となる情報源も添えてください。"
+    }
+  ],
+  seisaku: [
+    {
+      icon:"🖥️", title:"LP制作", src:"60_成果物 / 制作物（Web・LP）",
+      conf:"mid", confTxt:"確信度：中（要件による）",
+      desc:"じぶんサロンLPと同じ品質で、指定サービスのランディングページ（HTML）を構成案つきで制作します。",
+      prompt:"新しいランディングページ（LP）を制作したいです。\n・対象サービス／店舗：［　　　　　］\n・狙い（誰に何を届ける）：［　　　　　］\nまず構成案を出し、合意できたら自己完結のHTMLを作って 60_成果物/制作物 に保存してください。",
+      hint:"※ 対象サービスと狙いを［　］に入れてから送信してください。"
+    },
+    {
+      icon:"🎓", title:"学育スライド制作", src:"60_成果物 / 教育・学育",
+      conf:"mid", confTxt:"確信度：中（テーマによる）",
+      desc:"20代向け学育スライドと同じ形式で、指定テーマの教育スライド（HTML）を作成します。",
+      prompt:"学育スライドを作成したいです。\n・対象：20代スタッフ\n・テーマ：［　　　　　］\n既存の『学育第0部』と同じ形式で、スライド型HTMLを作り 60_成果物/教育・学育 に保存してください。",
+      hint:"※ テーマを［　］に入れてから送信してください。"
+    },
+    {
+      icon:"🗂️", title:"GoogleDrive棚卸し", src:"60_成果物 / 棚卸し・管理",
+      conf:"check", confTxt:"確信度：要確認（対象範囲の指定が必要）",
+      desc:"指定フォルダのファイルを棚卸しし、重複・古い版・集約案を一覧化します。元ファイルは削除しません。",
+      prompt:"指定フォルダの棚卸しをしてください。\n・対象フォルダ：［　　　　　］\nファイル一覧・重複・古い版・集約案を表で出してください。\n★元ファイルは削除せず、移動またはコピーの提案にとどめてください。",
+      hint:"※ 削除は行いません。対象フォルダを［　］に入れてから送信してください。"
+    }
+  ]
+};
+
+/* 実行環境の判定：ansa:// のワンタッチ起動はWindowsの起動プログラム前提。
+   iPhone/iPad/Mac等ではエラーダイアログになるため、コピー運用に自動で切り替える。 */
+const UA = navigator.userAgent || "";
+const IS_IOS = /iP(hone|ad|od)/.test(UA) || (/(Macintosh)/.test(UA) && "ontouchend" in document);
+const CAN_LAUNCH = /Windows/i.test(UA);   // ⚡自動起動を出すのはWindowsだけ
+
+const ICONS = {high:"c-high", mid:"c-mid", check:"c-check"};
+const FEAT_CATS = ["keiei","hito","seisaku"];
+const F_HIDE_KEY = "ansa_features_hidden_v1";
+let currentPrompt = "";      // 📋/📁 コピーで使うテキスト
+let currentLaunchText = "";  // ⚡ 自動起動で渡す指示文
+let featHidden = new Set();   // 一覧から外した機能のid
+let showHiddenFeat = false;   // 「外した機能を表示」モード
+
+/* 機能の安定id（key＋タイトル。データ側にidが無くても一意に定まる） */
+function featId(key, f){ return key+"::"+f.title; }
+
+function loadFeatHidden(){
+  try{ const raw = localStorage.getItem(F_HIDE_KEY); featHidden = new Set(raw ? JSON.parse(raw) : []); }
+  catch(e){ featHidden = new Set(); }
+}
+function saveFeatHidden(){
+  try{ localStorage.setItem(F_HIDE_KEY, JSON.stringify([...featHidden])); }catch(e){}
+}
+
+function renderFeatures(key, term){
+  const grid = document.getElementById("grid-"+key);
+  grid.innerHTML = "";
+  let shown = 0;
+  FEATURES[key].forEach((f)=>{
+    const id = featId(key, f);
+    // 表示モードに応じて、外したものだけ／外していないものだけを出す
+    if(showHiddenFeat ? !featHidden.has(id) : featHidden.has(id)) return;
+    if(term){
+      const hay = (f.title+" "+f.desc+" "+f.src).toLowerCase();
+      if(!hay.includes(term)) return;
+    }
+    shown++;
+    const card = document.createElement("div");
+    card.className = "card";
+    if(showHiddenFeat){
+      card.innerHTML = `
+        <div class="top">
+          <div class="icn">${f.icon}</div>
+          <div><h3>${esc(f.title)}</h3><div class="src">${esc(f.src)}</div></div>
+        </div>
+        <div class="desc">${esc(f.desc)}</div>
+        <div class="conf"><span class="pill ${ICONS[f.conf]}">${esc(f.confTxt)}</span></div>
+        <div class="acts"><button class="btn" style="background:var(--panel2);color:var(--gold2);border:1px solid var(--line)">↩ 一覧に戻す</button></div>`;
+      card.querySelector(".btn").addEventListener("click",()=>restoreFeature(id));
+    }else{
+      card.innerHTML = `
+        <div class="top">
+          <div class="icn">${f.icon}</div>
+          <div><h3>${esc(f.title)}</h3><div class="src">${esc(f.src)}</div></div>
+        </div>
+        <div class="desc">${esc(f.desc)}</div>
+        <div class="conf"><span class="pill ${ICONS[f.conf]}">${esc(f.confTxt)}</span></div>
+        <div class="acts">
+          <button class="btn">▶ 起動</button>
+          <button class="icobtn del" title="この機能を一覧から外す">🗑</button>
+        </div>
+        <div class="confirm">
+          この機能を<b>一覧から外す</b>だけです（元に戻せます）。よろしいですか？
+          <div class="cbtns">
+            <button class="yes">一覧から外す</button>
+            <button class="no">やめる</button>
+          </div>
+        </div>`;
+      card.querySelector(".btn").addEventListener("click",()=>openPromptModal({
+        icon:f.icon, title:f.title, src:f.src, prompt:f.prompt, hint:f.hint
+      }));
+      const conf = card.querySelector(".confirm");
+      card.querySelector(".del").addEventListener("click",()=>conf.classList.add("show"));
+      conf.querySelector(".no").addEventListener("click",()=>conf.classList.remove("show"));
+      conf.querySelector(".yes").addEventListener("click",()=>hideFeature(id));
+    }
+    grid.appendChild(card);
+  });
+  // カテゴリー見出しは、そのカテゴリーに表示があるときだけ出す
+  document.getElementById("cat-"+key).classList.toggle("hidden", shown===0);
+  return shown;
+}
+function filterFeatures(){
+  const q = document.getElementById("q-feat").value.trim().toLowerCase();
+  document.getElementById("q-feat-clear").classList.toggle("show", q.length>0);
+
+  // 「外した機能を表示」ボタンの見た目・件数
+  const hb = document.getElementById("f-hidebtn");
+  hb.classList.toggle("on", showHiddenFeat);
+  hb.firstChild.textContent = showHiddenFeat ? "✓ 外した機能を表示中" : "🗑 外した機能を表示";
+  document.getElementById("fhidecount").textContent = featHidden.size;
+
+  let total = 0;
+  FEAT_CATS.forEach(k=>{ total += renderFeatures(k, q); });
+
+  const nr = document.getElementById("feat-noresult");
+  document.getElementById("feat-q").textContent = document.getElementById("q-feat").value.trim();
+  nr.style.display = (total===0 && q) ? "block" : "none";
+  // 検索していないのに0件＝全部外した/外したものが無い、の案内
+  document.getElementById("feat-empty").style.display = (total===0 && !q) ? "block" : "none";
+}
+function clearFeatSearch(){
+  document.getElementById("q-feat").value = "";
+  filterFeatures();
+  document.getElementById("q-feat").focus();
+}
+function hideFeature(id){ featHidden.add(id); saveFeatHidden(); filterFeatures(); }
+function restoreFeature(id){ featHidden.delete(id); saveFeatHidden(); filterFeatures(); }
+function toggleHiddenFeat(){ showHiddenFeat = !showHiddenFeat; filterFeatures(); }
+
+loadFeatHidden();
+filterFeatures();
+
+/* =========================================================
+   タブ切替
+   ========================================================= */
+function switchTab(name){
+  ["launcher","worklist","products"].forEach(n=>{
+    document.getElementById("view-"+n).classList.toggle("show", n===name);
+    document.getElementById("tab-"+n).classList.toggle("active", n===name);
+  });
+}
+
+/* =========================================================
+   使い方の折りたたみ（全タブ共通・状態を記憶）
+   ========================================================= */
+const HOWTO_KEY = "ansa_howto_collapsed_v1";
+function applyHowto(collapsed){
+  document.querySelectorAll(".howto").forEach(h=>h.classList.toggle("collapsed", collapsed));
+}
+function toggleHowto(){
+  const now = !(localStorage.getItem(HOWTO_KEY)==="1");
+  try{ localStorage.setItem(HOWTO_KEY, now ? "1":"0"); }catch(e){}
+  applyHowto(now);
+}
+
+/* =========================================================
+   作業内容一覧（localStorage 永続化）
+   ========================================================= */
+const LS_KEY = "ansa_worklist_v1";
+
+// 初期の作業（引き継ぎ文書からの棚卸し・推測なし）
+/* ★v1.1で訂正（2026-07-20）
+   同期版では 作業リスト.js を読み込まない。正本は次のとおり。
+
+     同期オン  … Supabase が唯一の正本（SEEDは使われない）
+     同期オフ  … この端末のブラウザ保存。SEEDは「初回の1回だけ」使われる
+
+   したがって、下のSEEDを書き換えても、すでに一度開いた端末には反映されない。
+   反映させたい場合は、次のどちらか。
+     ・同期オンなら → Supabase 側に直接追加する
+     ・同期オフなら → 画面の「＋ 作業を追加」で手動追加する
+
+   旧「作業リスト.js（window.ANSA_WORKS）が正本」という記述は誤りだったため削除した。
+   作業リスト.js・成果物リスト.js は役目を終えたので _アーカイブ へ移す予定。 */
+const SEED = [
+  /* 公開ページのため、作業の実データ（店舗名・数値・判断の中身）は載せない。
+     実データは Supabase の ansa_works にあり、同期をオンにすると読み込まれる。
+     同期オフのときは、この画面の「＋ 作業を追加」で手動追加する。 */
+];
+
+const ST_CLASS = {
+  "未着手":"st-todo", "進行中":"st-doing", "保留":"st-hold",
+  "留保":"st-reserve", "次回":"st-next", "完了":"st-done"
+};
+// 状態の並び順（状態順ソート・チップの並び）
+const ST_ORDER = ["進行中","未着手","次回","保留","留保","完了"];
+const ST_SW = {
+  "未着手":"sw-todo","進行中":"sw-doing","保留":"sw-hold",
+  "留保":"sw-reserve","次回":"sw-next","完了":"sw-done"
+};
+
+let works = [];
+let editingId = null;
+let workFilter = "all";   // 状態フィルター
+
+/* ===== クラウド同期（Supabase・無料）。未設定ならこの端末のlocalStorageに保存 ===== */
+const SB_URL_KEY = "ansa_sb_url", SB_KEY_KEY = "ansa_sb_key";
+let SB_URL = localStorage.getItem(SB_URL_KEY) || "";
+let SB_KEY = localStorage.getItem(SB_KEY_KEY) || "";
+function syncOn(){ return !!(SB_URL && SB_KEY); }
+
+async function sbFetch(path, opts){
+  const o = opts || {};
+  const res = await fetch(SB_URL.replace(/\/+$/,"") + "/rest/v1/ansa_works" + path, {
+    ...o,
+    headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json", ...(o.headers||{}) },
+  });
+  if(!res.ok){ const t = await res.text().catch(()=>""); throw new Error("HTTP " + res.status + " " + t.slice(0,140)); }
+  return res;
+}
+async function sbGetWorks(){ return await (await sbFetch("?select=*", {})).json(); }
+async function sbUpsert(w){ await sbFetch("?on_conflict=id", { method:"POST", headers:{ Prefer:"resolution=merge-duplicates,return=minimal" }, body: JSON.stringify([w]) }); }
+async function sbDelete(id){ await sbFetch("?id=eq." + encodeURIComponent(id), { method:"DELETE", headers:{ Prefer:"return=minimal" } }); }
+
+function setSyncStatus(state, msg){
+  const el = document.getElementById("syncStatus");
+  if(!el) return;
+  el.className = "sync-status " + state;
+  el.textContent = state==="on" ? "☁️ 同期：オン（全端末で共有中）"
+    : state==="err" ? "⚠️ 同期エラー（この端末に保存中）"
+    : "☁️ 同期：オフ（この端末だけに保存）";
+  const rb = document.getElementById("syncReload");
+  if(rb) rb.style.display = (state==="on"||state==="err") ? "" : "none";
+}
+
+/* ローカル保存（同期オフ時） */
+function saveWorks(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(works)); }catch(e){} }
+
+/* 読み込み：同期オンならクラウドから、オフならローカル（初回はSEED） */
+async function loadWorks(){
+  if(syncOn()){
+    try{
+      const rows = await sbGetWorks();
+      works = rows.sort((a,b)=>(b.sort||0)-(a.sort||0));
+      setSyncStatus("on");
+      return;
+    }catch(e){ setSyncStatus("err", e.message); }   // 失敗時はローカルへフォールバック
+  }
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw===null){ works = SEED.map((w,i)=>({ ...w, sort: SEED.length - i })); saveWorks(); }
+    else works = JSON.parse(raw);
+  }catch(e){ works = []; }
+  if(!syncOn()) setSyncStatus("off");
+}
+async function reloadWorks(){ await loadWorks(); renderWorks(); }
+
+/* 同期設定パネル */
+function toggleSyncPanel(){
+  const p = document.getElementById("syncPanel");
+  const show = p.style.display==="none";
+  p.style.display = show ? "block" : "none";
+  if(show){ document.getElementById("sb-url").value = SB_URL; document.getElementById("sb-key").value = SB_KEY; }
+}
+async function saveSyncConfig(){
+  const url = document.getElementById("sb-url").value.trim().replace(/\/+$/,"");
+  const key = document.getElementById("sb-key").value.trim();
+  const help = document.getElementById("sp-help");
+  if(!url || !key){ help.innerHTML = '<span class="e">URL と キー の両方を貼り付けてください。</span>'; return; }
+  SB_URL = url; SB_KEY = key;
+  help.textContent = "接続テスト中…";
+  try{
+    await sbGetWorks();
+    localStorage.setItem(SB_URL_KEY, url); localStorage.setItem(SB_KEY_KEY, key);
+    help.innerHTML = '<b>✓ 接続できました。これで全端末が同期されます。</b>';
+    setSyncStatus("on");
+    fpRender();   // ⚡起動パネルの表示も切り替える（v1.4〜）
+    await reloadWorks();
+  }catch(e){
+    help.innerHTML = '<span class="e">接続できませんでした：' + esc(e.message) + '</span><br>URL/キーが正しいか、テーブル作成のSQLを実行したかを確認してください。';
+    setSyncStatus("err");
+  }
+}
+async function pushLocalToCloud(){
+  const help = document.getElementById("sp-help");
+  if(!syncOn()){ help.innerHTML = '<span class="e">先に「接続してテスト」で同期をオンにしてください。</span>'; return; }
+  let localWorks = [];
+  try{ const raw = localStorage.getItem(LS_KEY); localWorks = raw ? JSON.parse(raw) : []; }catch(e){}
+  if(localWorks.length===0){ help.innerHTML = 'この端末にローカルの作業はありません。'; return; }
+  let ok = 0;
+  for(const w of localWorks){ if(w.sort==null) w.sort = Date.now(); try{ await sbUpsert(w); ok++; }catch(e){} }
+  help.innerHTML = '<b>✓ ' + ok + ' 件をクラウドへ送りました。</b>';
+  await reloadWorks();
+}
+function disableSync(){
+  SB_URL = ""; SB_KEY = "";
+  localStorage.removeItem(SB_URL_KEY); localStorage.removeItem(SB_KEY_KEY);
+  document.getElementById("sb-url").value = ""; document.getElementById("sb-key").value = "";
+  document.getElementById("sp-help").innerHTML = "同期を解除しました。以後はこの端末だけに保存されます。";
+  setSyncStatus("off");
+  fpRender();   // ⚡起動パネルの表示も切り替える（v1.4〜）
+  loadWorks().then(renderWorks);
+}
+function today(){   // 日時（YYYY-MM-DD HH:MM）。時刻まで記録する（v1.3〜）
+  const d = new Date();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  const hh = String(d.getHours()).padStart(2,"0");
+  const mm = String(d.getMinutes()).padStart(2,"0");
+  return d.getFullYear()+"-"+m+"-"+day+" "+hh+":"+mm;
+}
+function todayDate(){  // 日付のみ（成果物の「実査時点」など時刻が不要な箇所用）
+  return today().slice(0,10);
+}
+function newId(){ return "w-"+Date.now()+"-"+Math.floor(Math.random()*1000); }
+
+function genWorkPrompt(w){
+  return "「"+w.title+"」の作業の続きをします。\n"
+       + "・状態：" + w.status + "\n"
+       + "・関連場所／出典：" + (w.place||"（未記入）") + "\n"
+       + "・次にやること：" + (w.next||"（未記入）") + "\n\n"
+       + "前回までの記録を踏まえ、続きから進めてください。"
+       + "分からないことは推測で埋めず、私に確認してください。";
+}
+
+/* 状態サマリー＆フィルターチップの描画 */
+function renderStatSum(){
+  const host = document.getElementById("statsum");
+  const counts = {};
+  ST_ORDER.forEach(s=>counts[s]=0);
+  works.forEach(w=>{ if(counts[w.status]===undefined) counts[w.status]=0; counts[w.status]++; });
+
+  let html = `<button class="chip ${workFilter==='all'?'active':''}" onclick="setWorkFilter('all')">
+      すべて<span class="n">${works.length}</span></button>`;
+  ST_ORDER.forEach(s=>{
+    if(!counts[s]) return; // 0件の状態は出さない
+    html += `<button class="chip ${workFilter===s?'active':''}" onclick="setWorkFilter('${s}')">
+        <span class="swatch ${ST_SW[s]}"></span>${esc(s)}<span class="n">${counts[s]}</span></button>`;
+  });
+  host.innerHTML = html;
+}
+function setWorkFilter(s){ workFilter = s; renderStatSum(); renderWorks(); }
+
+/* 重複の疑いを見える化（起動時・更新時に自動チェック）。
+   ★黙って統合はしない＝CLAUDE.md「元を消さない・重要操作は確認」。
+   検知するのは ①作業名がほぼ同じ ②並び番号(sort)の衝突 の2種類。 */
+const DUP_DISMISS_KEY = "ansa_dupwarn_dismissed_sig_v1";
+let dupCurrentSig = "";
+function normTitle(t){
+  return String(t||"").toLowerCase()
+    .replace(/[（(【\[].*?[）)】\]]/g,"")      // カッコ内の補足は無視
+    .replace(/[★※・\s\-—―\/／]/g,"")           // 記号・空白を無視
+    .trim();
+}
+function checkDuplicates(){
+  const box = document.getElementById("dupwarn");
+  if(!box) return;
+
+  // ① 作業名がほぼ同じ組
+  const byTitle = {};
+  works.forEach(w=>{ const k=normTitle(w.title); if(!k) return; (byTitle[k]=byTitle[k]||[]).push(w); });
+  const dupTitles = Object.values(byTitle).filter(g=>g.length>1);
+
+  // ② 並び番号(sort)の衝突
+  const bySort = {};
+  works.forEach(w=>{ const k=String(w.sort); (bySort[k]=bySort[k]||[]).push(w); });
+  const dupSorts = Object.values(bySort).filter(g=>g.length>1);
+
+  if(dupTitles.length===0 && dupSorts.length===0){ box.style.display="none"; return; }
+
+  // 今の重複の“署名”。閉じた署名と同じなら隠す＝新しい重複が出れば再表示される
+  dupCurrentSig = JSON.stringify({
+    t: dupTitles.map(g=>g.map(w=>w.id).sort()).sort(),
+    s: dupSorts.map(g=>g.map(w=>w.id).sort()).sort()
+  });
+  if(localStorage.getItem(DUP_DISMISS_KEY)===dupCurrentSig){ box.style.display="none"; return; }
+
+  let html = `<button class="dupclose" onclick="dismissDupWarn()" title="このメッセージを閉じる">✕</button>`;
+  html += `<b>⚠ 重複の疑いがあります。</b> 中身を確かめて、必要なら1つにまとめてください（自動では統合しません）。`;
+  if(dupTitles.length){
+    html += `<ul>`;
+    dupTitles.forEach(g=>{
+      html += `<li>名前がほぼ同じ：${g.map(w=>`「${esc(w.title)}」<small>(${esc(w.status)})</small>`).join(" ／ ")}</li>`;
+    });
+    html += `</ul>`;
+  }
+  if(dupSorts.length){
+    html += `<ul>`;
+    dupSorts.forEach(g=>{
+      html += `<li>並び番号の衝突（sort=${esc(String(g[0].sort))}）：${g.map(w=>`「${esc(w.title)}」`).join(" ／ ")}</li>`;
+    });
+    html += `</ul>`;
+  }
+  box.innerHTML = html;
+  box.style.display = "block";
+}
+function dismissDupWarn(){ localStorage.setItem(DUP_DISMISS_KEY, dupCurrentSig); document.getElementById("dupwarn").style.display="none"; }
+
+function sortedFilteredWorks(){
+  const q = (document.getElementById("q-work").value||"").trim().toLowerCase();
+  document.getElementById("q-work-clear").classList.toggle("show", q.length>0);
+  let list = works.slice();
+
+  if(workFilter!=="all") list = list.filter(w=>w.status===workFilter);
+  if(q) list = list.filter(w=>((w.title||"")+" "+(w.place||"")+" "+(w.next||"")).toLowerCase().includes(q));
+
+  const mode = document.getElementById("sortsel").value;
+  if(mode==="status"){
+    list.sort((a,b)=>{
+      const ia = ST_ORDER.indexOf(a.status), ib = ST_ORDER.indexOf(b.status);
+      return (ia<0?99:ia)-(ib<0?99:ib);
+    });
+  }else if(mode==="updated"){
+    list.sort((a,b)=>String(b.updated||"").localeCompare(String(a.updated||"")));
+  }
+  // "added"（既定）は works の並び順（新しい追加が先頭）そのまま
+  return list;
+}
+
+function renderWorks(){
+  const grid = document.getElementById("wgrid");
+  const empty = document.getElementById("empty");
+  const filteredEmpty = document.getElementById("wfiltered");
+  grid.innerHTML = "";
+  document.getElementById("wcount").textContent = works.length;
+  renderStatSum();
+  checkDuplicates();
+
+  if(works.length===0){
+    empty.style.display="block"; filteredEmpty.style.display="none"; return;
+  }
+  empty.style.display="none";
+
+  const list = sortedFilteredWorks();
+  if(list.length===0){ filteredEmpty.style.display="block"; return; }
+  filteredEmpty.style.display="none";
+
+  list.forEach((w)=>{
+    const stc = ST_CLASS[w.status] || "st-todo";
+    const card = document.createElement("div");
+    card.className = "wcard wl-"+stc;
+    card.innerHTML = `
+      <div class="wtop">
+        <h3>${esc(w.title)}</h3>
+        <span class="st ${stc}">${esc(w.status)}</span>
+      </div>
+      <div class="place">📁 <b>${esc(w.place||"（場所未記入）")}</b></div>
+      <div class="nextlbl">次にやること</div>
+      <div class="next">${esc(w.next||"（未記入）")}</div>
+      <div class="foot"><span class="upd">最終更新：${esc(w.updated||"—")}</span></div>
+      <div class="acts">
+        <button class="go">▶ 続きをする</button>
+        <button class="icobtn edit" title="編集">✏</button>
+        <button class="icobtn del" title="削除">🗑</button>
+      </div>
+      <div class="confirm">
+        この作業を一覧から削除します。よろしいですか？（元ファイルは消えません）
+        <div class="cbtns">
+          <button class="yes">削除する</button>
+          <button class="no">やめる</button>
+        </div>
+      </div>`;
+    card.querySelector(".go").addEventListener("click",()=>openPromptModal({
+      icon:"▶", title:w.title, src:w.place||"", prompt:genWorkPrompt(w),
+      hint:"※ この指示文をアンサに貼り付けると、<b>この作業の続き</b>から始まります。"
+    }));
+    card.querySelector(".edit").addEventListener("click",()=>openForm(w.id));
+    const conf = card.querySelector(".confirm");
+    card.querySelector(".del").addEventListener("click",()=>conf.classList.add("show"));
+    conf.querySelector(".no").addEventListener("click",()=>conf.classList.remove("show"));
+    conf.querySelector(".yes").addEventListener("click",()=>deleteWork(w.id));
+    grid.appendChild(card);
+  });
+}
+function clearWorkSearch(){
+  document.getElementById("q-work").value = "";
+  renderWorks();
+  document.getElementById("q-work").focus();
+}
+
+function openForm(id){
+  editingId = id || null;
+  const f = document.getElementById("form");
+  const save = document.getElementById("f-save");
+  if(editingId){
+    const w = works.find(x=>x.id===editingId);
+    document.getElementById("f-title").value = w.title;
+    document.getElementById("f-status").value = w.status;
+    document.getElementById("f-place").value = w.place||"";
+    document.getElementById("f-next").value = w.next||"";
+    save.textContent = "保存する";
+  }else{
+    document.getElementById("f-title").value = "";
+    document.getElementById("f-status").value = "未着手";
+    document.getElementById("f-place").value = "";
+    document.getElementById("f-next").value = "";
+    save.textContent = "追加する";
+  }
+  f.classList.add("show");
+  f.scrollIntoView({behavior:"smooth", block:"nearest"});
+  document.getElementById("f-title").focus();
+}
+function closeForm(){
+  document.getElementById("form").classList.remove("show");
+  editingId = null;
+}
+async function saveWork(){
+  const title = document.getElementById("f-title").value.trim();
+  if(!title){ document.getElementById("f-title").focus(); return; }
+  const status = document.getElementById("f-status").value;
+  const place = document.getElementById("f-place").value.trim();
+  const next = document.getElementById("f-next").value.trim();
+  let w;
+  if(editingId){
+    w = works.find(x=>x.id===editingId);
+    w.title=title; w.status=status; w.place=place; w.next=next; w.updated=today();
+    if(w.sort==null) w.sort = Date.now();
+  }else{
+    w = {id:newId(), title, status, place, next, updated:today(), sort: Date.now()};
+    works.unshift(w);
+  }
+  renderWorks(); closeForm();
+  if(syncOn()){
+    try{ await sbUpsert(w); setSyncStatus("on"); }
+    catch(e){ setSyncStatus("err", e.message); showToast("同期に失敗（この端末には保存済み）"); }
+  }else{ saveWorks(); }
+}
+async function deleteWork(id){
+  works = works.filter(x=>x.id!==id);
+  renderWorks();
+  if(syncOn()){
+    try{ await sbDelete(id); setSyncStatus("on"); }
+    catch(e){ setSyncStatus("err", e.message); showToast("同期削除に失敗しました"); }
+  }else{ saveWorks(); }
+}
+function copyAll(){
+  if(works.length===0){ return; }
+  let txt = "# アンサ 作業内容一覧（"+today()+" 時点）\n\n";
+  works.forEach((w,i)=>{
+    txt += (i+1)+". 【"+w.status+"】"+w.title+"\n";
+    txt += "   場所："+(w.place||"—")+"\n";
+    txt += "   次にやること："+(w.next||"—")+"\n";
+    txt += "   最終更新："+(w.updated||"—")+"\n\n";
+  });
+  copyText(txt);
+}
+
+/* =========================================================
+   成果物一覧（フォルダ実在分・2026-07-18 実査／localStorageで非表示管理）
+   ========================================================= */
+const P_BASE = "";   // 公開ページのためローカルの保存先は載せない
+const P_HIDE_KEY = "ansa_products_hidden_v1";
+
+const CAT_ORDER = [
+  {key:"kyoiku",  icon:"🎓", label:"教育・学育"},
+  {key:"anesta",  icon:"💺", label:"ANESTA"},
+  {key:"chosa",   icon:"🔍", label:"調査・分析"},
+  {key:"seisaku", icon:"🖥️", label:"制作物（Web・LP）"},
+  {key:"toshi",   icon:"📈", label:"投資"},
+  {key:"tana",    icon:"🗂️", label:"棚卸し・管理"}
+];
+
+// path は 60_成果物 からの相対（バックスラッシュ）
+const PRODUCTS = [
+  /* 公開ページのため、成果物の実データ（ファイル名・保存先・内容）は載せない。
+     一覧は Supabase 側から供給する。手元で見たいときは同期をオンにすること。 */
+];
+
+let hidden = new Set();
+let showHidden = false;
+let currentPath = "";
+
+function loadHidden(){
+  try{
+    const raw = localStorage.getItem(P_HIDE_KEY);
+    hidden = new Set(raw ? JSON.parse(raw) : []);
+  }catch(e){ hidden = new Set(); }
+}
+function saveHidden(){
+  try{ localStorage.setItem(P_HIDE_KEY, JSON.stringify([...hidden])); }catch(e){}
+}
+
+function renderProducts(){
+  const host = document.getElementById("pcats");
+  const empty = document.getElementById("pempty");
+  const filteredEmpty = document.getElementById("pfiltered");
+  host.innerHTML = "";
+
+  const q = (document.getElementById("q-prod").value||"").trim().toLowerCase();
+  document.getElementById("q-prod-clear").classList.toggle("show", q.length>0);
+
+  const visibleCount = PRODUCTS.filter(p=>!hidden.has(p.id)).length;
+  document.getElementById("pcount").textContent = visibleCount;
+  document.getElementById("phidecount").textContent = hidden.size;
+  document.getElementById("p-hidebtn").classList.toggle("on", showHidden);
+  document.getElementById("p-hidebtn").firstChild.textContent = showHidden ? "✓ 外した成果物を表示中" : "🗑 外した成果物を表示";
+
+  let list = PRODUCTS.filter(p => showHidden ? hidden.has(p.id) : !hidden.has(p.id));
+  const baseEmpty = list.length===0;
+  if(q) list = list.filter(p=>((p.title||"")+" "+(p.desc||"")+" "+(p.path||"")).toLowerCase().includes(q));
+
+  if(baseEmpty){ empty.style.display="block"; filteredEmpty.style.display="none"; return; }
+  empty.style.display="none";
+  if(list.length===0){ filteredEmpty.style.display="block"; return; }
+  filteredEmpty.style.display="none";
+
+  CAT_ORDER.forEach(c=>{
+    const items = list.filter(p=>p.cat===c.key);
+    if(items.length===0) return;
+    const sec = document.createElement("section");
+    sec.className = "cat";
+    sec.innerHTML = `<div class="cat-h"><span class="dot"></span><h2>${c.icon} ${esc(c.label)}</h2><span class="cnt">${items.length}</span><span class="rule"></span></div>`;
+    const grid = document.createElement("div");
+    grid.className = "wgrid";
+    items.forEach(p=>{
+      const card = document.createElement("div");
+      card.className = "wcard";
+      if(showHidden){
+        card.innerHTML = `
+          <div class="wtop"><h3>${esc(p.title)}</h3><span class="badge-cat">${esc(c.label)}</span></div>
+          <div class="place">📁 <b>60_成果物\\${esc(p.path)}</b></div>
+          <div class="meta2">${esc(p.meta)}</div>
+          <div class="next">${esc(p.desc)}</div>
+          <div class="acts">
+            <button class="go">↩ 一覧に戻す</button>
+            <button class="icobtn" title="パスをコピー">📁</button>
+          </div>`;
+        card.querySelector(".go").addEventListener("click",()=>restoreProduct(p.id));
+        card.querySelector(".icobtn").addEventListener("click",()=>copyPath(p));
+      }else{
+        card.innerHTML = `
+          <div class="wtop"><h3>${esc(p.title)}</h3><span class="badge-cat">${esc(c.label)}</span></div>
+          <div class="place">📁 <b>60_成果物\\${esc(p.path)}</b></div>
+          <div class="meta2">${esc(p.meta)}</div>
+          <div class="next">${esc(p.desc)}</div>
+          <div class="acts">
+            <button class="go launch" title="${CAN_LAUNCH?'アンサがこのファイルを読んで作業を始めます':'この成果物の指示文をコピー（アンサに貼り付け）'}">${CAN_LAUNCH?'⚡ この成果物で作業':'📋 指示文をコピー'}</button>
+            <button class="icobtn path" title="パスをコピー（開くだけ）">📁</button>
+            <button class="icobtn info" title="詳細">ℹ</button>
+            <button class="icobtn del" title="一覧から外す">🗑</button>
+          </div>
+          <div class="confirm">
+            この成果物を<b>一覧から外す</b>だけです。<b>元ファイルは削除しません</b>。よろしいですか？
+            <div class="cbtns">
+              <button class="yes">一覧から外す</button>
+              <button class="no">やめる</button>
+            </div>
+          </div>`;
+        card.querySelector(".go").addEventListener("click",()=>launchProduct(p));
+        card.querySelector(".icobtn.path").addEventListener("click",()=>copyPath(p));
+        card.querySelector(".icobtn.info").addEventListener("click",()=>openProductModal(p,c));
+        const conf = card.querySelector(".confirm");
+        card.querySelector(".del").addEventListener("click",()=>conf.classList.add("show"));
+        conf.querySelector(".no").addEventListener("click",()=>conf.classList.remove("show"));
+        conf.querySelector(".yes").addEventListener("click",()=>hideProduct(p.id));
+      }
+      grid.appendChild(card);
+    });
+    sec.appendChild(grid);
+    host.appendChild(sec);
+  });
+}
+function clearProdSearch(){
+  document.getElementById("q-prod").value = "";
+  renderProducts();
+  document.getElementById("q-prod").focus();
+}
+
+function fullPath(p){ return P_BASE + p.path.replace(/\//g,"\\"); }
+function copyPath(p){ copyText(fullPath(p)); }
+/* 成果物で作業を始めるときアンサに渡す指示文（安全側：読んで確認・勝手に上書き削除しない） */
+function genProductPrompt(p){
+  return "「"+p.title+"」について作業します。\n"
+       + "・ファイル："+fullPath(p)+"\n"
+       + "・種別／説明："+p.desc+"\n\n"
+       + "まずこのファイルを読んで現状を要約し、次に何をするか（改善・更新・新しい版の作成など）を私に確認してください。\n"
+       + "★元ファイルは勝手に上書き・削除せず、変更するときは版を上げて提案してください。分からないことは推測で埋めないでください。";
+}
+function launchProduct(p){
+  const text = genProductPrompt(p);
+  // スマホ等（Windows以外）はansa://を出さず、コピーのみ（貼り付け運用）
+  if(!CAN_LAUNCH){ copyText(text, "✓ コピーしました。アンサに貼り付けてください"); return; }
+  const fire = ()=>{ setTimeout(()=>{ try{ window.location.href = "ansa://run"; }catch(e){} }, 180); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{ showToast("✓ コピー→アンサ起動中…"); fire(); })
+                                       .catch(()=>{ fallbackCopy(text); fire(); });
+  }else{ fallbackCopy(text); fire(); }
+}
+function hideProduct(id){ hidden.add(id); saveHidden(); renderProducts(); }
+function restoreProduct(id){ hidden.delete(id); saveHidden(); renderProducts(); }
+function toggleHidden(){ showHidden = !showHidden; renderProducts(); }
+function openProductModal(p,c){
+  document.getElementById("m-icn").textContent = c.icon;
+  document.getElementById("m-title").textContent = p.title;
+  document.getElementById("m-src").textContent = c.label + " ・ " + p.meta;
+  document.getElementById("m-lbl").textContent = "ファイルの場所（パス）";
+  document.getElementById("m-prompt").textContent = P_BASE + p.path.replace(/\//g,"\\");
+  document.getElementById("m-hint").innerHTML = esc(p.desc) + "<br><b>⚡ この成果物で作業</b>＝アンサがこのファイルを読んで作業を始めます。<b>📁 パスをコピー</b>＝エクスプローラーで開くだけ。";
+  document.getElementById("m-copy").textContent = "📁 パスをコピー";
+  document.getElementById("m-launch").textContent = CAN_LAUNCH ? "⚡ この成果物で作業" : "📋 指示文をコピー";
+  document.getElementById("m-launch").style.display = "";
+  currentPrompt = fullPath(p);            // 📁 コピー＝パス
+  currentLaunchText = genProductPrompt(p); // ⚡ 起動＝作業指示文
+  document.getElementById("overlay").classList.add("show");
+}
+function copyAllProducts(){
+  let txt = "# アンサ 成果物一覧（"+todayDate()+" 実査時点）\n\n";
+  CAT_ORDER.forEach(c=>{
+    const items = PRODUCTS.filter(p=>p.cat===c.key && !hidden.has(p.id));
+    if(items.length===0) return;
+    txt += "## "+c.label+"\n";
+    items.forEach(p=>{
+      txt += "- "+p.title+"（"+p.meta+"）\n  60_成果物\\"+p.path+"\n  "+p.desc+"\n";
+    });
+    txt += "\n";
+  });
+  copyText(txt);
+}
+
+/* =========================================================
+   モーダル・コピー・トースト（共通）
+   ========================================================= */
+function openPromptModal(f){
+  document.getElementById("m-icn").textContent = f.icon;
+  document.getElementById("m-title").textContent = f.title;
+  document.getElementById("m-src").textContent = f.src;
+  document.getElementById("m-lbl").textContent = "アンサへの指示文";
+  document.getElementById("m-prompt").textContent = f.prompt;
+  document.getElementById("m-hint").innerHTML = f.hint || "";
+  document.getElementById("m-copy").textContent = "📋 コピー";
+  document.getElementById("m-launch").textContent = CAN_LAUNCH ? "⚡ アンサを自動起動" : "📋 指示文をコピー";
+  document.getElementById("m-launch").style.display = "";  // 指示文モーダルでは自動起動を出す
+  currentPrompt = f.prompt;
+  currentLaunchText = f.prompt;
+  document.getElementById("overlay").classList.add("show");
+}
+function closeModal(){ document.getElementById("overlay").classList.remove("show"); }
+
+/* ⚡ 自動起動：指示文をクリップボードにコピー → 合図 ansa:// を出す。
+   Windows側の起動プログラムがクリップボードから指示文を拾い、アンサを対話起動する。
+   ※ ansa:// の登録が未設定の場合は、コピーだけ完了（貼り付け運用に自動フォールバック）。 */
+function launchAnsa(){
+  const text = currentLaunchText || currentPrompt;
+  if(!CAN_LAUNCH){ copyText(text, "✓ コピーしました。アンサに貼り付けてください"); return; }
+  const fire = ()=>{ setTimeout(()=>{ try{ window.location.href = "ansa://run"; }catch(e){} }, 180); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{ showToast("✓ コピー→アンサ起動中…"); fire(); })
+                                       .catch(()=>{ fallbackCopy(text); fire(); });
+  }else{ fallbackCopy(text); fire(); }
+}
+document.getElementById("overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+
+function copyPrompt(){ copyText(currentPrompt); }
+function copyText(text, msg){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>showToast(msg)).catch(()=>fallbackCopy(text,msg));
+  }else{ fallbackCopy(text,msg); }
+}
+/* iOS Safari でも確実に選択→コピーできるフォールバック */
+function fallbackCopy(text, msg){
+  const ta=document.createElement("textarea");
+  ta.value=text; ta.readOnly=true; ta.contentEditable="true";
+  ta.style.position="fixed"; ta.style.top="0"; ta.style.left="0";
+  ta.style.width="1px"; ta.style.height="1px"; ta.style.opacity="0"; ta.style.fontSize="16px";
+  document.body.appendChild(ta);
+  if(IS_IOS){
+    const range=document.createRange(); range.selectNodeContents(ta);
+    const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    ta.setSelectionRange(0, text.length);
+  }else{ ta.select(); }
+  let ok=false;
+  try{ ok=document.execCommand("copy"); }catch(e){}
+  ta.remove();
+  showToast(ok ? msg : "コピーできませんでした。指示文を長押しで選択してください");
+}
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent = msg || "✓ コピーしました";
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+/* HTMLエスケープ（ユーザー入力を安全に表示） */
+function esc(s){
+  return String(s==null?"":s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+/* =========================================================
+   ⚡ アンサ起動（v1.4〜）
+   iPhone/PC → Supabase Edge Function「fire-ansa」→ Anthropic のルーティン。
+   ★このページには、トークンも鍵も書かれていない。
+     起動用トークンは Supabase の中だけにあり、端末には一切降りてこない。
+     ここで扱うのは、ひろき本人のログイン証（有効期限つき）だけ。
+   ========================================================= */
+const FP_AUTH_KEY = "ansa_auth_v1";
+let fpAuth = null;
+try{ fpAuth = JSON.parse(localStorage.getItem(FP_AUTH_KEY) || "null"); }catch(e){ fpAuth = null; }
+
+function fpSaveAuth(a){
+  fpAuth = a;
+  try{
+    if(a) localStorage.setItem(FP_AUTH_KEY, JSON.stringify(a));
+    else localStorage.removeItem(FP_AUTH_KEY);
+  }catch(e){}
+}
+function fpMsg(kind, html){
+  const el = document.getElementById("fp-msg");
+  if(!el) return;
+  if(!html){ el.className = "fp-msg"; el.innerHTML = ""; return; }
+  el.className = "fp-msg show " + kind;
+  el.innerHTML = html;
+}
+function fpRender(){
+  const noconf = document.getElementById("fp-noconf");
+  const login  = document.getElementById("fp-login");
+  const fire   = document.getElementById("fp-fire");
+  if(!noconf || !login || !fire) return;
+  const conf = syncOn();
+  noconf.style.display = conf ? "none" : "";
+  login.style.display  = (conf && !fpAuth) ? "" : "none";
+  fire.style.display   = (conf && fpAuth) ? "" : "none";
+  const who = document.getElementById("fp-who");
+  if(who && fpAuth) who.textContent = "ログイン中：" + (fpAuth.email || "");
+}
+
+/* ログイン（メール＋パスワード）。パスワードは保存しない。 */
+async function fpLogin(){
+  const email = (document.getElementById("fp-email").value || "").trim();
+  const pass  = document.getElementById("fp-pass").value || "";
+  if(!email || !pass){ fpMsg("ng", "メールとパスワードを入れてください。"); return; }
+  fpMsg("", "");
+  try{
+    const res = await fetch(SB_URL.replace(/\/+$/,"") + "/auth/v1/token?grant_type=password", {
+      method:"POST",
+      headers:{ apikey: SB_KEY, "Content-Type":"application/json" },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const j = await res.json().catch(()=>({}));
+    if(!res.ok){
+      fpMsg("ng", "ログインできませんでした。" + esc(j.error_description || j.msg || j.message || ("HTTP " + res.status)));
+      return;
+    }
+    fpSaveAuth({
+      access_token: j.access_token,
+      refresh_token: j.refresh_token,
+      expires_at: Date.now() + ((j.expires_in || 3600) * 1000),
+      email: (j.user && j.user.email) || email
+    });
+    document.getElementById("fp-pass").value = "";
+    fpRender();
+    fpMsg("ok", "ログインしました。この端末は次回から入力不要です。");
+  }catch(e){
+    fpMsg("ng", "通信に失敗しました：" + esc(String(e.message || e)));
+  }
+}
+
+function fpLogout(){
+  fpSaveAuth(null);
+  fpRender();
+  fpMsg("ok", "ログアウトしました。");
+}
+
+/* 有効期限が近ければ、静かに更新する */
+async function fpToken(){
+  if(!fpAuth) return null;
+  if(Date.now() < (fpAuth.expires_at || 0) - 60000) return fpAuth.access_token;
+  try{
+    const res = await fetch(SB_URL.replace(/\/+$/,"") + "/auth/v1/token?grant_type=refresh_token", {
+      method:"POST",
+      headers:{ apikey: SB_KEY, "Content-Type":"application/json" },
+      body: JSON.stringify({ refresh_token: fpAuth.refresh_token })
+    });
+    const j = await res.json().catch(()=>({}));
+    if(!res.ok || !j.access_token){ fpSaveAuth(null); fpRender(); return null; }
+    fpSaveAuth({
+      access_token: j.access_token,
+      refresh_token: j.refresh_token || fpAuth.refresh_token,
+      expires_at: Date.now() + ((j.expires_in || 3600) * 1000),
+      email: fpAuth.email
+    });
+    return fpAuth.access_token;
+  }catch(e){ return null; }
+}
+
+/* 起動 */
+async function fpFire(){
+  const btn = document.getElementById("fp-btn");
+  const text = (document.getElementById("fp-text").value || "").trim();
+  fpMsg("", "");
+  const tok = await fpToken();
+  if(!tok){ fpRender(); fpMsg("ng", "ログインの期限が切れました。もう一度ログインしてください。"); return; }
+
+  btn.disabled = true;
+  const before = btn.textContent;
+  btn.textContent = "起動中…";
+  try{
+    const res = await fetch(SB_URL.replace(/\/+$/,"") + "/functions/v1/fire-ansa", {
+      method:"POST",
+      headers:{ Authorization: "Bearer " + tok, "Content-Type":"application/json" },
+      body: JSON.stringify({ text })
+    });
+    const j = await res.json().catch(()=>({}));
+
+    if(res.ok && j.ok){
+      const link = j.url
+        ? '<br><a href="' + esc(j.url) + '" target="_blank" rel="noopener">→ 実行の様子を見る</a>'
+        : "";
+      fpMsg("ok",
+        "アンサが動き始めました。<b>本日 " + esc(String(j.used)) + "/" + esc(String(j.limit)) + " 回</b>。" +
+        "<br>結果は GitHub <code>revolution-ansa/ansa-routine</code> の <code>out/</code> にファイルで残ります（数分かかります）。" + link);
+      document.getElementById("fp-text").value = "";
+    }else if(res.status === 401){
+      fpSaveAuth(null); fpRender();
+      fpMsg("ng", "ログインが切れました。もう一度ログインしてください。");
+    }else if(res.status === 403){
+      fpMsg("ng", "この利用者は起動を許可されていません。（" + esc(j.error || "") + "）");
+    }else if(res.status === 429){
+      fpMsg("ng", esc(j.error || "回数の上限に達しました。"));
+    }else{
+      fpMsg("ng", "起動できませんでした。" + esc(j.error || ("HTTP " + res.status)) +
+        (j.detail ? "<br><small>" + esc(String(j.detail).slice(0,200)) + "</small>" : ""));
+    }
+  }catch(e){
+    fpMsg("ng", "通信に失敗しました：" + esc(String(e.message || e)));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = before;
+  }
+}
+
+/* init */
+if(!CAN_LAUNCH){ document.getElementById("mnote").classList.add("show"); }  // スマホ/Mac等で案内を表示
+fpRender();
+applyHowto(localStorage.getItem(HOWTO_KEY)==="1");
+setSyncStatus(syncOn() ? "on" : "off");
+loadWorks().then(renderWorks);
+loadHidden();
+renderProducts();
+</script>
+</body>
+</html>
