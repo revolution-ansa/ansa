@@ -741,20 +741,28 @@
   <!-- VIEW 5: 🚨 非常（監査役が壊れたとき・表示専用）                  -->
   <!-- ============================================================ -->
   <style>
-    #view-emg .emg-warn{border:2px solid #a8322a;border-radius:12px;padding:14px 16px;margin:0 0 16px;background:#fff5f4}
-    #view-emg .emg-warn .t{font-weight:700;font-size:15px;color:#a8322a;margin-bottom:6px}
-    #view-emg .emg-warn .d{font-size:13px;line-height:1.8;color:#5a3330}
-    #view-emg .emg-card{border:1px solid #d8cfc0;border-radius:12px;padding:14px 16px;margin:0 0 14px;background:#fdfbf7}
-    #view-emg .emg-card h3{font-size:14.5px;margin:0 0 8px}
-    #view-emg ol{margin:0;padding-left:1.3em;font-size:13px;line-height:2}
-    #view-emg ol b{color:#a8322a}
-    #view-emg .emg-path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;background:#f2ede4;
-      border:1px solid #ddd4c5;border-radius:8px;padding:8px 10px;margin:8px 0;word-break:break-all;line-height:1.7}
-    #view-emg .emg-bad{font-size:13px;line-height:1.9}
-    #view-emg .emg-bad td{padding:6px 8px;border-top:1px solid #e6ded1;vertical-align:top}
+    /* 本体と同じ暗い配色を使う。明るい背景を使うと、色指定のない文字が
+       白地に白文字（--txt:#e8ecf5）になって読めなくなる。2026-08-26 修正 */
+    #view-emg{color:var(--txt)}
+    #view-emg .emg-warn{border:1px solid rgba(255,118,118,.55);border-radius:12px;padding:14px 16px;
+      margin:0 0 16px;background:rgba(255,118,118,.10)}
+    #view-emg .emg-warn .t{font-weight:700;font-size:15px;color:var(--red);margin-bottom:6px}
+    #view-emg .emg-warn .d{font-size:13px;line-height:1.8;color:var(--txt)}
+    #view-emg .emg-card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+      margin:0 0 14px;background:var(--panel);color:var(--txt)}
+    #view-emg .emg-card h3{font-size:14.5px;margin:0 0 8px;color:var(--gold)}
+    #view-emg ol{margin:0;padding-left:1.3em;font-size:13px;line-height:2;color:var(--txt)}
+    #view-emg ol b{color:var(--gold2)}
+    #view-emg .emg-note{font-size:12px;color:var(--sub);line-height:1.8}
+    #view-emg .emg-path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;
+      background:#0c111c;color:var(--txt);
+      border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0;word-break:break-all;line-height:1.7}
+    #view-emg .emg-bad{font-size:13px;line-height:1.9;color:var(--txt);width:100%}
+    #view-emg .emg-bad td{padding:6px 8px;border-top:1px solid var(--line);vertical-align:top}
     #view-emg .emg-bad tr:first-child td{border-top:0}
-    #view-emg .emg-state{font-size:13px;line-height:1.8}
-    #view-emg .emg-stale{color:#a8322a;font-weight:700}
+    #view-emg .emg-state{font-size:13px;line-height:1.8;color:var(--txt)}
+    #view-emg .emg-stale{color:var(--red);font-weight:700}
+    #view-emg .emg-ok{color:var(--green);font-weight:700}
   </style>
 
   <div class="view" id="view-emg">
@@ -782,18 +790,18 @@
         <li>デスクトップの <b>「★監査役 非常ボタン」</b> をダブルクリック</li>
         <li>「戻す必要はありません」と出たら → 原因はここではない。画面の文をアンサに見せる</li>
         <li>「正しく動いていません」と出たら → <b>復旧</b> と打って Enter<br>
-            <span style="font-size:12px;color:#6b6357">（打たずに Enter なら、何も変わりません）</span></li>
+            <span class="emg-note">（打たずに Enter なら、何も変わりません）</span></li>
         <li>「★戻りました」と出たら → <b>Claude Code を全部閉じて開き直す</b></li>
         <li>アンサに <b>「復旧.bat で戻した」</b> と伝える<br>
-            <span style="font-size:12px;color:#6b6357">※ 戻した版より後の直しは巻き戻っています。機械では確かめられません</span></li>
+            <span class="emg-note">※ 戻した版より後の直しは巻き戻っています。機械では確かめられません</span></li>
       </ol>
       <div class="emg-path" id="emg-path">C:\Users\randh\OneDrive\デスクトップ\★監査役 非常ボタン.bat</div>
       <button class="tbtn" onclick="emgCopy()">📋 場所をコピー</button>
-      <span id="emg-copied" style="font-size:12px;color:#3d7a4a;display:none">コピーしました</span>
+      <span id="emg-copied" class="emg-ok" style="font-size:12px;display:none">コピーしました</span>
     </div>
 
-    <div class="emg-card" style="border-color:#a8322a">
-      <h3 style="color:#a8322a">3. ★絶対にやってはいけない直し方</h3>
+    <div class="emg-card" style="border-color:rgba(255,118,118,.55)">
+      <h3 style="color:var(--red)">3. ★絶対にやってはいけない直し方</h3>
       <div class="emg-state" style="margin-bottom:8px">
         <b>「フックを外す」「監査役のファイルの名前を変える」。</b>
         止まらなくなりますが、同時に<b>禁止128件が1件残らず効かなくなります。</b>
@@ -808,7 +816,7 @@
     <div class="emg-card">
       <h3>4. いまの監査役の状態（表示専用）</h3>
       <div class="emg-state" id="emg-status">読み込み中…</div>
-      <div style="font-size:12px;color:#6b6357;line-height:1.8;margin-top:8px">
+      <div class="emg-note" style="margin-top:8px">
         ※ この数字は、PC側が書き出したファイルを読んでいるだけです。<b>いまこの瞬間の生死ではありません。</b><br>
         ※ 生死そのものは、PC上の1時間ごとの見張り役が確かめています（<b>最悪1時間、気づきません</b>）。
       </div>
