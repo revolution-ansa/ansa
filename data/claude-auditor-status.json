@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-29T06:43:32.488Z",
+  "updatedAt": "2026-08-29T06:46:43.942Z",
   "windowMinutes": 1440,
   "service": {
     "state": "unknown",
@@ -13,8 +13,8 @@
     "desktopCowork": "not_connected"
   },
   "counts": {
-    "total": 1815,
-    "allow": 1410,
+    "total": 1818,
+    "allow": 1413,
     "warn": 196,
     "block": 209
   },
