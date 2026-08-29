@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-29T06:20:54.027Z",
+  "updatedAt": "2026-08-29T06:42:48.356Z",
   "windowMinutes": 1440,
   "service": {
     "state": "unknown",
@@ -13,39 +13,39 @@
     "desktopCowork": "not_connected"
   },
   "counts": {
-    "total": 1840,
+    "total": 1810,
     "allow": 1405,
-    "warn": 206,
-    "block": 229
+    "warn": 196,
+    "block": 209
   },
   "recentFindings": [
     {
       "id": "other",
       "label": "その他の監査項目",
-      "level": "block",
-      "count": 227,
-      "lastDetectedAt": "2026-08-29T06:17:56.927Z"
-    },
-    {
-      "id": "other",
-      "label": "その他の監査項目",
       "level": "warn",
-      "count": 200,
-      "lastDetectedAt": "2026-08-29T06:15:11.142Z"
-    },
-    {
-      "id": "secret-private-key",
-      "label": "秘密鍵らしき内容",
-      "level": "block",
-      "count": 10,
-      "lastDetectedAt": "2026-08-29T05:37:25.210Z"
+      "count": 191,
+      "lastDetectedAt": "2026-08-29T06:22:32.820Z"
     },
     {
       "id": "email-address",
       "label": "メールアドレス",
       "level": "warn",
-      "count": 31,
-      "lastDetectedAt": "2026-08-29T05:37:23.818Z"
+      "count": 30,
+      "lastDetectedAt": "2026-08-29T06:21:21.213Z"
+    },
+    {
+      "id": "other",
+      "label": "その他の監査項目",
+      "level": "block",
+      "count": 209,
+      "lastDetectedAt": "2026-08-29T06:17:56.927Z"
+    },
+    {
+      "id": "secret-private-key",
+      "label": "秘密鍵らしき内容",
+      "level": "block",
+      "count": 8,
+      "lastDetectedAt": "2026-08-29T05:37:25.210Z"
     },
     {
       "id": "unsupported-guarantee",
