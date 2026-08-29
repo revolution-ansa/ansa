@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-29T07:26:00.486Z",
+  "updatedAt": "2026-08-29T07:27:16.940Z",
   "windowMinutes": 1440,
   "service": {
     "state": "unknown",
@@ -13,18 +13,18 @@
     "desktopCowork": "not_connected"
   },
   "counts": {
-    "total": 1956,
-    "allow": 1535,
+    "total": 1959,
+    "allow": 1536,
     "warn": 216,
-    "block": 205
+    "block": 207
   },
   "recentFindings": [
     {
       "id": "other",
       "label": "その他の監査項目",
       "level": "block",
-      "count": 205,
-      "lastDetectedAt": "2026-08-29T07:25:34.470Z"
+      "count": 207,
+      "lastDetectedAt": "2026-08-29T07:27:09.679Z"
     },
     {
       "id": "other",
