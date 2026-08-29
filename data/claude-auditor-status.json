@@ -1,30 +1,58 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-24T08:20:58.728Z",
+  "updatedAt": "2026-08-29T06:20:54.027Z",
   "windowMinutes": 1440,
   "service": {
     "state": "unknown",
     "version": "0.1.0"
   },
   "channels": {
-    "claudeCode": "not_connected",
-    "chrome": "unknown",
-    "edge": "unknown",
+    "claudeCode": "active",
+    "chrome": "not_connected",
+    "edge": "not_connected",
     "desktopCowork": "not_connected"
   },
   "counts": {
-    "total": 56,
-    "allow": 49,
-    "warn": 7,
-    "block": 0
+    "total": 1840,
+    "allow": 1405,
+    "warn": 206,
+    "block": 229
   },
   "recentFindings": [
+    {
+      "id": "other",
+      "label": "その他の監査項目",
+      "level": "block",
+      "count": 227,
+      "lastDetectedAt": "2026-08-29T06:17:56.927Z"
+    },
+    {
+      "id": "other",
+      "label": "その他の監査項目",
+      "level": "warn",
+      "count": 200,
+      "lastDetectedAt": "2026-08-29T06:15:11.142Z"
+    },
+    {
+      "id": "secret-private-key",
+      "label": "秘密鍵らしき内容",
+      "level": "block",
+      "count": 10,
+      "lastDetectedAt": "2026-08-29T05:37:25.210Z"
+    },
+    {
+      "id": "email-address",
+      "label": "メールアドレス",
+      "level": "warn",
+      "count": 31,
+      "lastDetectedAt": "2026-08-29T05:37:23.818Z"
+    },
     {
       "id": "unsupported-guarantee",
       "label": "保証を示す断定表現",
       "level": "warn",
-      "count": 7,
-      "lastDetectedAt": "2026-08-24T06:16:12.676Z"
+      "count": 1,
+      "lastDetectedAt": "2026-08-29T03:09:50.421Z"
     }
   ]
 }
