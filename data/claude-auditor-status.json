@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-29T07:27:16.940Z",
+  "updatedAt": "2026-09-03T11:06:44.423Z",
   "windowMinutes": 1440,
   "service": {
     "state": "unknown",
@@ -13,46 +13,46 @@
     "desktopCowork": "not_connected"
   },
   "counts": {
-    "total": 1959,
-    "allow": 1536,
-    "warn": 216,
-    "block": 207
+    "total": 2919,
+    "allow": 2082,
+    "warn": 313,
+    "block": 524
   },
   "recentFindings": [
     {
       "id": "other",
       "label": "その他の監査項目",
-      "level": "block",
-      "count": 207,
-      "lastDetectedAt": "2026-08-29T07:27:09.679Z"
-    },
-    {
-      "id": "other",
-      "label": "その他の監査項目",
       "level": "warn",
-      "count": 207,
-      "lastDetectedAt": "2026-08-29T07:14:10.745Z"
+      "count": 257,
+      "lastDetectedAt": "2026-09-03T10:58:09.064Z"
     },
     {
       "id": "email-address",
       "label": "メールアドレス",
       "level": "warn",
-      "count": 34,
-      "lastDetectedAt": "2026-08-29T07:07:02.193Z"
+      "count": 56,
+      "lastDetectedAt": "2026-09-03T10:53:15.916Z"
+    },
+    {
+      "id": "other",
+      "label": "その他の監査項目",
+      "level": "block",
+      "count": 488,
+      "lastDetectedAt": "2026-09-03T10:51:15.215Z"
     },
     {
       "id": "secret-private-key",
       "label": "秘密鍵らしき内容",
       "level": "block",
-      "count": 8,
-      "lastDetectedAt": "2026-08-29T05:37:25.210Z"
+      "count": 36,
+      "lastDetectedAt": "2026-09-03T10:44:23.463Z"
     },
     {
-      "id": "unsupported-guarantee",
-      "label": "保証を示す断定表現",
+      "id": "japanese-phone",
+      "label": "電話番号らしき内容",
       "level": "warn",
       "count": 1,
-      "lastDetectedAt": "2026-08-29T03:09:50.421Z"
+      "lastDetectedAt": "2026-09-03T10:26:29.780Z"
     }
   ]
 }
