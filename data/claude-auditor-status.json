@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T11:38:55.827Z",
+  "updatedAt": "2026-09-04T00:30:02.158Z",
   "windowMinutes": 1440,
   "service": {
     "state": "unknown",
@@ -13,39 +13,39 @@
     "desktopCowork": "not_connected"
   },
   "counts": {
-    "total": 2997,
-    "allow": 2155,
-    "warn": 315,
-    "block": 527
+    "total": 3405,
+    "allow": 2477,
+    "warn": 351,
+    "block": 577
   },
   "recentFindings": [
     {
       "id": "other",
       "label": "その他の監査項目",
-      "level": "block",
-      "count": 491,
-      "lastDetectedAt": "2026-09-03T11:28:48.103Z"
+      "level": "warn",
+      "count": 287,
+      "lastDetectedAt": "2026-09-04T00:26:41.421Z"
     },
     {
       "id": "other",
       "label": "その他の監査項目",
-      "level": "warn",
-      "count": 259,
-      "lastDetectedAt": "2026-09-03T11:23:39.596Z"
-    },
-    {
-      "id": "email-address",
-      "label": "メールアドレス",
-      "level": "warn",
-      "count": 56,
-      "lastDetectedAt": "2026-09-03T10:53:15.916Z"
+      "level": "block",
+      "count": 536,
+      "lastDetectedAt": "2026-09-04T00:26:41.242Z"
     },
     {
       "id": "secret-private-key",
       "label": "秘密鍵らしき内容",
       "level": "block",
-      "count": 36,
-      "lastDetectedAt": "2026-09-03T10:44:23.463Z"
+      "count": 41,
+      "lastDetectedAt": "2026-09-04T00:26:39.937Z"
+    },
+    {
+      "id": "email-address",
+      "label": "メールアドレス",
+      "level": "warn",
+      "count": 64,
+      "lastDetectedAt": "2026-09-04T00:26:38.499Z"
     },
     {
       "id": "japanese-phone",
