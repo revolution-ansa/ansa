@@ -443,6 +443,7 @@
     <button class="tab active" id="tab-launcher" onclick="switchTab('launcher')">アンサに頼む</button>
     <button class="tab" id="tab-worklist" onclick="switchTab('worklist')">作業リスト<span class="count" id="wcount">0</span></button>
     <button class="tab" id="tab-products" onclick="switchTab('products')">作ったもの<span class="count" id="pcount">0</span></button>
+    <button class="tab" id="tab-brief" onclick="switchTab('brief')">今朝のブリーフィング<span class="count" id="bfbadge" style="display:none">!</span></button>
     <button class="tab" id="tab-audit" onclick="switchTab('audit')">Claude監査</button>
     <button class="tab" id="tab-emg" onclick="switchTab('emg')" style="color:#a8322a;font-weight:700">🚨 非常</button>
   </div>
@@ -726,7 +727,82 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- VIEW 4: Claude監査（読み取り専用・PCの監査役の状態を表示）      -->
+  <!-- VIEW 4: 今朝のブリーフィング（読み取り専用・Supabaseから読む）  -->
+  <!--                                                              -->
+  <!-- ★この画面は表示専用。ここから書き換えはできない。             -->
+  <!-- ★正本は GitHub の briefings/YYYY-MM-DD.md。ここは写しを映す。  -->
+  <!-- ★最上段の「本日未着」だけは必ず出す。届かなかったことに       -->
+  <!--   気づける場所が、ほかに1つも無いため（設計 v1.0 第2章）。    -->
+  <!-- ============================================================ -->
+  <style>
+    #view-brief{color:var(--txt)}
+    #view-brief .bf-intro{font-size:12.5px;color:var(--sub);line-height:1.8;margin:0 0 12px}
+    #view-brief .bf-bar{display:flex;align-items:center;gap:8px;margin:0 0 12px}
+    #view-brief .bf-bar .spacer{flex:1}
+    #view-brief .bf-updated{font-size:12px;color:var(--sub)}
+
+    /* 届いた／届いていないの札。ここが一番大事な表示 */
+    #view-brief .bf-state{border-radius:12px;padding:12px 14px;margin:0 0 14px;
+      font-size:13.5px;line-height:1.8;border:1px solid var(--line);background:var(--panel)}
+    #view-brief .bf-state.miss{border-color:rgba(255,118,118,.55);background:rgba(255,118,118,.10)}
+    #view-brief .bf-state.wait{border-color:rgba(230,190,110,.45);background:rgba(230,190,110,.10)}
+    #view-brief .bf-state.ok{border-color:rgba(120,200,140,.40);background:rgba(120,200,140,.08)}
+    #view-brief .bf-state .t{font-weight:700;font-size:15px;margin-bottom:4px}
+    #view-brief .bf-state.miss .t{color:var(--red)}
+    #view-brief .bf-state.wait .t{color:var(--gold)}
+    #view-brief .bf-state.ok .t{color:var(--green)}
+
+    #view-brief .bf-card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+      margin:0 0 14px;background:var(--panel)}
+    #view-brief .bf-card h3{font-size:14px;margin:0 0 8px;color:var(--gold)}
+    #view-brief .bf-date{font-size:12px;color:var(--sub);margin-bottom:8px;line-height:1.8}
+    #view-brief .bf-head{font-size:15px;font-weight:700;line-height:1.9;color:var(--txt)}
+
+    /* 数値表。値そのものより「出所の格付け」を見せるための表 */
+    #view-brief table.bf-m{width:100%;font-size:12.5px;line-height:1.7;border-collapse:collapse}
+    #view-brief table.bf-m th,#view-brief table.bf-m td{padding:6px 8px;border-top:1px solid var(--line);
+      text-align:left;vertical-align:top}
+    #view-brief table.bf-m th{color:var(--sub);font-weight:400;font-size:11.5px}
+    #view-brief table.bf-m tr:first-child td{border-top:0}
+    #view-brief .bf-num{font-family:ui-monospace,Menlo,Consolas,monospace}
+    #view-brief .bf-src{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap}
+    #view-brief .bf-src.s1{color:var(--green);border-color:rgba(120,200,140,.45)}
+    #view-brief .bf-src.s2{color:var(--gold2)}
+    #view-brief .bf-src.s3{color:var(--red);border-color:rgba(255,118,118,.45)}
+    #view-brief .bf-up{color:var(--red)} #view-brief .bf-down{color:var(--green)}
+
+    /* 本文（markdownを最小限だけ整える） */
+    #view-brief .bf-body{font-size:13px;line-height:1.9;color:var(--txt);word-break:break-word}
+    #view-brief .bf-body h1,#view-brief .bf-body h2,#view-brief .bf-body h3{
+      font-size:14px;color:var(--gold);margin:16px 0 6px}
+    #view-brief .bf-body table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;display:block;overflow-x:auto}
+    #view-brief .bf-body th,#view-brief .bf-body td{border:1px solid var(--line);padding:5px 7px;text-align:left}
+    #view-brief .bf-body blockquote{margin:8px 0;padding:6px 10px;border-left:3px solid var(--line);color:var(--sub)}
+    #view-brief .bf-body hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+    #view-brief .bf-body ul{margin:6px 0;padding-left:1.2em}
+    #view-brief .bf-fold{font-size:12.5px;color:var(--gold2);cursor:pointer;user-select:none}
+    #view-brief .bf-past{font-size:12.5px;line-height:1.9;color:var(--sub)}
+    #view-brief .bf-past b{color:var(--txt)}
+    #view-brief .bf-note{font-size:11.5px;color:var(--sub);line-height:1.8;margin-top:6px}
+  </style>
+
+  <div class="view" id="view-brief">
+    <div class="bf-intro">
+      毎朝のブリーフィングを読む場所です。<b>ここは表示専用</b>で、書き換えはできません。
+      正本は GitHub（<span class="bf-num">briefings/YYYY-MM-DD.md</span>）にあり、この画面はその写しを映しています。
+    </div>
+
+    <div class="bf-bar">
+      <span class="bf-updated" id="bf-updated">—</span>
+      <div class="spacer"></div>
+      <button class="tbtn" id="bf-refresh" onclick="bfLoad()">🔄 更新</button>
+    </div>
+
+    <div id="bf-body"><div class="audit-loading">読み込み中…</div></div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 5: Claude監査（読み取り専用・PCの監査役の状態を表示）      -->
   <!-- ============================================================ -->
   <div class="view" id="view-audit">
     <div class="audit-intro">
@@ -1082,10 +1158,11 @@ filterFeatures();
    タブ切替
    ========================================================= */
 function switchTab(name){
-  ["launcher","worklist","products","audit","emg"].forEach(n=>{
+  ["launcher","worklist","products","brief","audit","emg"].forEach(n=>{
     document.getElementById("view-"+n).classList.toggle("show", n===name);
     document.getElementById("tab-"+n).classList.toggle("active", n===name);
   });
+  if(name==="brief") bfOnShow();
   if(name==="audit") auditOnShow();
   if(name==="emg") emgOnShow();
 }
@@ -1873,6 +1950,241 @@ async function fpFire(){
 
 /* =========================================================
    Claude監査ダッシュボード（読み取り専用・公開JSONを表示するだけ）
+   ========================================================= */
+/* =========================================================
+   今朝のブリーフィング（表示専用）
+
+   ★読む場所：Supabase の ansa_briefings（本文）と ansa_metrics（数値）。
+   ★書かない：この画面からの更新・削除は一切しない。正本はGitHub。
+   ★ansa_metrics がまだ無くても、画面は落ちない（本文だけ出す）。
+   ★最上段の「本日未着」は、どんなときでも必ず出す。
+     届かなかったことに気づける場所が、ほかに1つも無いため。
+   アンサ：2026-08-30（設計_毎朝ブリーフィング_全体_v1_0.md 第2章）
+   ========================================================= */
+let bfTimer = null, bfStarted = false, bfOpen = false;
+
+function bfOnShow(){
+  if(bfStarted) return;
+  bfStarted = true;
+  bfLoad();
+  bfTimer = setInterval(()=>{
+    if(document.getElementById("view-brief").classList.contains("show")) bfLoad();
+  }, 300000); /* 5分ごと。朝しか変わらないので短くしない */
+}
+
+/* 日本時間の「今日」と「時」。端末の時計がどこの国でも同じ判定にする */
+function bfTodayJST(){
+  return new Intl.DateTimeFormat("en-CA",{ timeZone:"Asia/Tokyo",
+    year:"numeric", month:"2-digit", day:"2-digit" }).format(new Date()); /* YYYY-MM-DD */
+}
+function bfHourJST(){
+  return parseInt(new Intl.DateTimeFormat("en-GB",{ timeZone:"Asia/Tokyo", hour:"2-digit", hour12:false })
+    .format(new Date()), 10);
+}
+function bfDaysBetween(a, b){ /* a,b は YYYY-MM-DD */
+  const d1 = new Date(a + "T00:00:00Z"), d2 = new Date(b + "T00:00:00Z");
+  if(isNaN(d1) || isNaN(d2)) return null;
+  return Math.round((d2 - d1) / 86400000);
+}
+
+function bfEsc(s){
+  return String(s == null ? "" : s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+/* Supabase から読むだけ。表が無い場合も落とさず、その事実を返す */
+async function bfSb(table, query){
+  const url = SB_URL.replace(/\/+$/,"") + "/rest/v1/" + table + query;
+  const res = await fetch(url, { cache:"no-store",
+    headers:{ apikey: SB_KEY, Authorization: "Bearer " + SB_KEY } });
+  if(!res.ok){
+    const t = await res.text().catch(()=>"");
+    return { ok:false, status:res.status, msg:t.slice(0,160) };
+  }
+  return { ok:true, data: await res.json() };
+}
+
+/* markdown を最小限だけ整える。凝らない。中身は必ずエスケープしてから組む */
+function bfMd(src){
+  const lines = String(src || "").split(/\r?\n/);
+  let out = "", tbl = null, inList = false;
+  const inline = s => bfEsc(s)
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+  const closeList = () => { if(inList){ out += "</ul>"; inList = false; } };
+  const flushTable = () => {
+    if(!tbl) return;
+    let h = "";
+    tbl.forEach((row, i) => {
+      const cell = i === 0 ? "th" : "td";
+      h += "<tr>" + row.map(c => "<"+cell+">" + inline(c) + "</"+cell+">").join("") + "</tr>";
+    });
+    out += "<table>" + h + "</table>";
+    tbl = null;
+  };
+  for(const raw of lines){
+    const line = raw.replace(/\s+$/,"");
+    if(/^\s*\|.*\|\s*$/.test(line)){
+      closeList();
+      const cells = line.trim().replace(/^\||\|$/g,"").split("|").map(c=>c.trim());
+      if(/^[\s:|-]+$/.test(line.replace(/\|/g,"")) && tbl){ continue; } /* 見出しの下線行 */
+      (tbl = tbl || []).push(cells);
+      continue;
+    }
+    flushTable();
+    if(!line.trim()){ closeList(); continue; }
+    let m;
+    if((m = line.match(/^(#{1,6})\s+(.*)$/))){ closeList(); out += "<h3>" + inline(m[2]) + "</h3>"; continue; }
+    if(/^\s*(---|\*\*\*|___)\s*$/.test(line)){ closeList(); out += "<hr>"; continue; }
+    if((m = line.match(/^\s*>\s?(.*)$/))){ closeList(); out += "<blockquote>" + inline(m[1]) + "</blockquote>"; continue; }
+    if((m = line.match(/^\s*[-*+]\s+(.*)$/))){
+      if(!inList){ out += "<ul>"; inList = true; }
+      out += "<li>" + inline(m[1]) + "</li>"; continue;
+    }
+    closeList();
+    out += "<div>" + inline(line) + "</div>";
+  }
+  closeList(); flushTable();
+  return out;
+}
+
+function bfSrcBadge(cls){
+  const c = String(cls || "").trim();
+  if(c === "一次") return '<span class="bf-src s1">一次</span>';
+  if(c === "二次") return '<span class="bf-src s2">二次</span>';
+  if(c === "検索") return '<span class="bf-src s3">検索</span>';
+  return '<span class="bf-src">格付けなし</span>';
+}
+
+/* 数値表。前日比は「同じ metric の1つ前の as_of」との差 */
+function bfMetricsHtml(rows){
+  if(!rows || !rows.length) return "";
+  const days = [...new Set(rows.map(r=>r.as_of))].sort().reverse();
+  const cur = days[0], prev = days[1];
+  const curRows = rows.filter(r=>r.as_of===cur);
+  if(!curRows.length) return "";
+  let h = '<div class="bf-card"><h3>数値（対象営業日 ' + bfEsc(cur) + '）</h3>'
+        + '<table class="bf-m"><tr><th>指標</th><th>値</th><th>前日比</th><th>出所</th><th>状態</th></tr>';
+  for(const r of curRows){
+    const p = prev ? rows.find(x=>x.as_of===prev && x.metric===r.metric) : null;
+    let diff = "—";
+    if(p && r.value !== null && p.value !== null && isFinite(+r.value) && isFinite(+p.value)){
+      const d = (+r.value) - (+p.value);
+      const cls = d > 0 ? "bf-up" : d < 0 ? "bf-down" : "";
+      const sign = d > 0 ? "+" : "";
+      diff = '<span class="' + cls + '">' + sign + (Math.round(d*10000)/10000) + "</span>";
+    }
+    const val = (r.status === "取得不可")
+      ? '<span class="bf-up">取得不可</span>'
+      : '<span class="bf-num">' + bfEsc(r.value) + "</span> " + bfEsc(r.unit || "");
+    h += "<tr><td>" + bfEsc(r.metric) + "</td><td>" + val + "</td><td>" + diff + "</td><td>"
+       + bfSrcBadge(r.source_class) + "</td><td>" + bfEsc(r.status || "") + "</td></tr>";
+  }
+  h += "</table><div class=\"bf-note\">出所が<b>「検索」</b>の数字で「確信度：高」と書いてはいけません"
+     + "（品質と安全 関所1）。<b>「取得不可」も記録として残します。</b></div></div>";
+  return h;
+}
+
+function bfToggleBody(){
+  bfOpen = !bfOpen;
+  const el = document.getElementById("bf-full");
+  const fd = document.getElementById("bf-fold");
+  if(el) el.style.display = bfOpen ? "" : "none";
+  if(fd) fd.textContent = bfOpen ? "▲ 全文を閉じる" : "▼ 全文を読む";
+}
+
+function bfRender(list, metrics, metricsNote){
+  const box = document.getElementById("bf-body");
+  const today = bfTodayJST();
+  const latest = list && list.length ? list[0] : null;
+  const latestDate = latest ? String(latest.briefing_date).slice(0,10) : null;
+
+  /* ① 届いたか。ここが最上段。無ければ赤 */
+  let state = "", stateCls = "", stateTxt = "";
+  if(!latest){
+    stateCls = "miss"; state = "1本も届いていません";
+    stateTxt = "ansa_briefings に1件もありません。定期実行がまだ動いていないか、送信が繋がっていません。";
+  }else if(latestDate === today){
+    stateCls = "ok"; state = "本日分が届いています";
+    stateTxt = "最終更新：" + auditFmtJST(latest.updated_at || latest.created_at);
+  }else{
+    const gap = bfDaysBetween(latestDate, today);
+    if(gap === 1 && bfHourJST() < 7){
+      stateCls = "wait"; state = "本日分はまだです（6:00ごろに届きます）";
+      stateTxt = "いま日本時間 " + bfHourJST() + "時台です。最新は " + bfEsc(latestDate) + " の分です。";
+    }else{
+      stateCls = "miss"; state = "本日未着";
+      stateTxt = "最新は " + bfEsc(latestDate) + " の分で、" + (gap==null ? "?" : gap) + "日前です。"
+               + "<b>届いていません。</b>定期実行の状態を確認してください。";
+    }
+  }
+  const badge = document.getElementById("bfbadge");
+  if(badge) badge.style.display = (stateCls === "miss") ? "" : "none";
+
+  let h = '<div class="bf-state ' + stateCls + '"><div class="t">' + bfEsc(state) + "</div><div>" + stateTxt + "</div></div>";
+
+  if(latest){
+    h += '<div class="bf-card">'
+       + '<div class="bf-date">' + bfEsc(latest.briefing_date) + " ／ " + bfEsc(latest.title || "") + "</div>"
+       + '<div class="bf-head">' + bfEsc(latest.headline || "（最重要の1行がありません）") + "</div>";
+    if(latest.summary_md) h += '<div class="bf-body" style="margin-top:10px">' + bfMd(latest.summary_md) + "</div>";
+    h += '<div style="margin-top:10px"><span class="bf-fold" id="bf-fold" onclick="bfToggleBody()">▼ 全文を読む</span>'
+       + '<div class="bf-body" id="bf-full" style="display:none;margin-top:8px">'
+       + bfMd(latest.body_md || "（全文がありません）") + "</div></div>";
+    if(latest.source_path) h += '<div class="bf-note">正本：<span class="bf-num">' + bfEsc(latest.source_path) + "</span></div>";
+    h += "</div>";
+  }
+
+  h += bfMetricsHtml(metrics);
+  if(metricsNote) h += '<div class="bf-card"><h3>数値</h3><div class="bf-note">' + bfEsc(metricsNote) + "</div></div>";
+
+  if(list && list.length > 1){
+    h += '<div class="bf-card"><h3>これまで（7日分）</h3><div class="bf-past">';
+    for(const b of list.slice(0,7)){
+      h += "<div><b>" + bfEsc(String(b.briefing_date).slice(0,10)) + "</b>　" + bfEsc(b.headline || "") + "</div>";
+    }
+    h += "</div></div>";
+  }
+
+  box.innerHTML = h;
+  const up = document.getElementById("bf-updated");
+  if(up) up.textContent = "画面の取得：" + auditFmtJST(new Date().toISOString());
+}
+
+async function bfLoad(){
+  const rb = document.getElementById("bf-refresh");
+  const box = document.getElementById("bf-body");
+  if(rb) rb.disabled = true;
+  try{
+    if(!syncOn()){
+      box.innerHTML = '<div class="bf-state wait"><div class="t">同期が未設定です</div>'
+        + "<div>「作業リスト」タブの<b>同期の設定</b>で、Project URL と anon キーを入れてください。"
+        + "この画面は、作業リストと同じ接続情報を使います。</div></div>";
+      return;
+    }
+    const b = await bfSb("ansa_briefings", "?select=*&order=briefing_date.desc,id.desc&limit=7");
+    if(!b.ok){
+      box.innerHTML = '<div class="bf-state miss"><div class="t">読み込めませんでした</div><div>HTTP '
+        + bfEsc(b.status) + "　" + bfEsc(b.msg)
+        + "<br><b>表がまだ無い場合</b>は、docs/supabase_ansa_briefings.sql を Supabase で実行してください。</div></div>";
+      return;
+    }
+    let metrics = [], note = "";
+    const m = await bfSb("ansa_metrics", "?select=*&order=as_of.desc,metric.asc&limit=200");
+    if(m.ok) metrics = m.data;
+    else note = "数値台帳（ansa_metrics）はまだありません。段階2で作ります。本文だけ表示しています。";
+    bfRender(b.data, metrics, note);
+  }catch(e){
+    box.innerHTML = '<div class="bf-state miss"><div class="t">読み込めませんでした</div><div>'
+      + bfEsc(e && e.message ? e.message : e) + "</div></div>";
+  }finally{
+    if(rb) rb.disabled = false;
+  }
+}
+
+/* =========================================================
+   Claude監査（読み取り専用）
    ========================================================= */
 const AUDIT_URL = "data/claude-auditor-status.json";
 let auditTimer = null, auditStarted = false, auditLastFetch = null;
