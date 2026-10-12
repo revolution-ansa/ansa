@@ -2011,7 +2011,13 @@ function bfMd(src){
   let out = "", tbl = null, inList = false;
   const inline = s => bfEsc(s)
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
-    .replace(/`([^`]+)`/g, "<code>$1</code>");
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    /* ★2026-10-12 追加（ひろき承認）：Markdownのリンク [見出し](URL) を
+       クリックできる形にする。巡回まとめの「目次」から記事へ飛べるようにするため。
+       ★http / https だけを対象にする。javascript: 等はリンクにせず文字のまま残す。
+       ★URL に ) を含むものはリンクにならない（文字のまま出る）。実害は小さいが既知の限界。 */
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+             '<a href="$2" target="_blank" rel="noopener">$1</a>');
   const closeList = () => { if(inList){ out += "</ul>"; inList = false; } };
   const flushTable = () => {
     if(!tbl) return;
